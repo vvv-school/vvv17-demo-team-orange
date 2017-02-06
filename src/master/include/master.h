@@ -25,7 +25,10 @@
 using namespace yarp::os;
 using namespace std;
 
-class Thread_read : public RateThread {
+
+//** IF we need a thread...
+
+/*class Thread_read : public RateThread {
 public:
     Thread_read(BufferedPort<Bottle> * broad_port,RpcClient * rpcClient,int r);
     Bottle _data,_ids;
@@ -41,16 +44,19 @@ public:
     virtual void run();
 
 private:
-    BufferedPort<Bottle> *_port_broad;
-    RpcClient *_rpc_port;
+
+
 };
-
-
+*/
 class MasterModule: public RFModule, public MASTER_IDL {
     string moduleName;
     
 private:
-
+    yarp::os::RpcServer rpcPort;
+    yarp::os::RpcClient rpcObjReco;
+    yarp::os::RpcClient rpcSpeech;
+    yarp::os::RpcClient rpcPlanner;
+    yarp::os::RpcClient rpcPickPlace;
 public:
     
     double getPeriod();

@@ -5,6 +5,7 @@
 **  CopyPolicy: Released under the terms of the GNU GPL v2.0.
 *******************************************************************/
 
+// In case we need to reply with Bottles
 struct Bottle { }
 (
 yarp.name = "yarp::os::Bottle"

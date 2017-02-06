@@ -1,0 +1,17 @@
+<application>
+    <name>Team Orange - Demo</name>
+
+    <dependencies>
+    </dependencies>
+
+    <module>
+        <name>exampleModule</name>
+        <node>localhost</node>
+    </module>
+
+    <connection>
+        <from>/exampleconnection/:o</from>
+        <to>/exampleconnection/:i</to>
+        <protocol>udp</protocol>
+    </connection>
+</application>
