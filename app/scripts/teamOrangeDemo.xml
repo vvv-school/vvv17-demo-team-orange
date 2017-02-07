@@ -1,19 +1,17 @@
 <application>
 <name>Team Orange</name>
-
+<!--
 <dependencies>
     <port>/icub/camcalib/left/out</port>
     <port>/lbpExtract/extractedlbp:o</port>
 
 </dependencies>
-
+-->
 <!-- Modules configurations -->
 
 <module>
     <name>master</name>
-    <parameters>--whostarts robot</parameters>
-    <parameters>--initBoardPosition "(0 1 2 0 1 2)"</parameters>
-    <parameters>--GoalInit "(1 1 1)"</parameters>
+    <parameters>--whostarts robot --initBoardPosition "(0 1 2 0 1 2)" --GoalInit "(1 1 1)"</parameters>
     <node>localhost</node>
 </module>
 
@@ -59,12 +57,12 @@
 <!-- rpcClient connection to Move Planner Module-->
 <connection>
     <from>/movePlanner/rpc:o</from>
-    <to>/moveGrouding/rpc:i</to>
+    <to>/moveGroundingModule/rpc</to>
 </connection>
 
 <!-- rpcClient connection to Pick And Place Module-->
 <connection>
-    <from>/master/pickAndPlace/rpc:o</from>
+    <from>/master/pickandplace/rpc:o</from>
     <to>/pickAndPlace/rpc:i</to>
 </connection>
 

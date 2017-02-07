@@ -17,7 +17,7 @@ int main(int argc, char *argv[]) {
     Network yarp;
 
     if(! yarp.checkNetwork() ) {
-        fprintf(stdout,"Error: yarp server does not seem available\n");
+        yError()<<"Error: yarp server does not seem available";
         return 1;
     }
 
