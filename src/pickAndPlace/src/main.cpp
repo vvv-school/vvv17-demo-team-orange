@@ -32,8 +32,13 @@ protected:
     int startup_ctxt_arm_left;
     int startup_ctxt_gaze;
     double initial_approach_height;
+    double force_threshold;
+
+    Vector pick_location;
+    Vector place_location;
 
     RpcServer rpcPort;
+    BufferedPort<Vector> inPort;
     ObjectRetriever object;
 
 
@@ -85,14 +90,41 @@ protected:
         // located 5 cm above the target x
 
         Vector approach = x;
-        approach[2] += initial_approach_height; // in m
+        approach[2] = initial_approach_height; // in m
         iarm->goToPoseSync(approach, o);
         iarm->waitMotionDone();
+        yInfo()<<"Reached approach position. Going down now.";
 
-        // reach the final target x;
+        // reset the force sensors here!
 
         iarm->goToPoseSync(x, o); // should use force feedback at some point
-        iarm->waitMotionDone();
+        bool motion_done = false;
+        bool force_detected = false;
+
+
+        while(!motion_done && !force_detected){
+            iarm->checkMotionDone(&motion_done); // or force detected
+
+//            // read force input port
+//            Vector *forceData = inPort.read();
+//            if(forceData == YARP_NULLPTR){
+//                yError()<<"error reading port";
+//                force_detected = true; // to stop the motion
+//            }
+//            else{
+//                if ((*forceData)[2] > force_threshold)
+//                {
+//                    force_detected = true;
+//                }
+//            }
+
+
+        }
+        yInfo()<<"reached final hand position";
+
+        bool stoppedControl = iarm->stopControl(); // try really hard to stop that arm...
+
+        yInfo()<<"hand stopped. We got " << stoppedControl;
     }
 
     /***************************************************/
@@ -108,7 +140,9 @@ protected:
         Vector x, o;
         if (iarm->getPose(x, o))
         {
-            x[2] += initial_approach_height; // lift 15cm, orientation stays the same
+
+            x[2] = initial_approach_height; // lift 15cm, orientation stays the same
+            yInfo() << "Lifting the object to " << x.toString();
             iarm->goToPoseSync(x, o);
             iarm->waitMotionDone();
         }
@@ -315,6 +349,19 @@ public:
         string robot=rf.check("robot",Value("icubSim")).asString();
 
         initial_approach_height = 0.25;
+        force_threshold = 5.0;
+
+        pick_location.resize(3);
+        pick_location[0] = -0.3;
+        pick_location[1] = 0.0;
+        pick_location[2] = 0.1;
+
+        yInfo()<<pick_location.size();
+
+        place_location.resize(3);
+        place_location[0] = -0.3;
+        place_location[1] = 0.0;
+        place_location[2] = 0.1;
 
         // we need both arms for this
 
@@ -365,14 +412,21 @@ public:
         drvGaze.view(igaze);
         igaze->storeContext(&startup_ctxt_gaze);
 
-        rpcPort.open("/service");
+        rpcPort.open("/pickAndPlace/rpc:i");
         attach(rpcPort);
+
+
+        if (!inPort.open("/relay/in")) {
+            yError() << "cannot open the input port";
+            return -1;
+        }
         return true;
     }
 
     /***************************************************/
     bool interruptModule()
     {
+        //inPort.close();
         return true;
     }
 
@@ -387,6 +441,8 @@ public:
 
         igaze->restoreContext(startup_ctxt_gaze);
 
+        inPort.close();
+
         drvArmR.close();
         drvArmL.close();
         drvGaze.close();
@@ -399,6 +455,8 @@ public:
     /***************************************************/
     bool respond(const Bottle &command, Bottle &reply)
     {
+
+
         string cmd=command.get(0).asString();
         if (cmd=="help")
         {
@@ -415,7 +473,39 @@ public:
             reply.addString("ack");
             reply.addString("Yep! I'm looking down now!");
         }
-        else if (cmd=="grasp_it")
+
+        else if (cmd=="setStart")
+        {
+            if (command.size()>3)
+            {
+            pick_location[0] = command.get(1).asDouble();
+            pick_location[1] = command.get(2).asDouble();
+            pick_location[2] = command.get(3).asDouble();
+
+            reply.addString("ack");
+            yDebug()<<"Set start location to " << pick_location.toString();
+            }
+            else {
+                reply.addString("nack");
+            }
+        }
+
+        else if (cmd=="setGoal")
+        {
+            if (command.size()>3)
+            {
+            place_location[0] = command.get(1).asDouble();
+            place_location[1] = command.get(2).asDouble();
+            place_location[2] = command.get(3).asDouble();
+
+            reply.addString("ack");
+           yDebug()<<"Set goal location to " << place_location.toString();
+            }
+            else {
+                reply.addString("nack");
+            }
+        }
+        else if (cmd=="pickAndPlace")
         {
             // the "closure" accounts for how much we should
             // close the fingers around the object:
@@ -432,28 +522,22 @@ public:
             if (command.size()>2)
                 hand_orientation=command.get(2).asDouble();
 
-            Vector pick_location(3);
-            pick_location[0] = -0.3;
-            pick_location[1] = 0.0;
-            pick_location[2] = 0.0;
-            Vector place_location(3);
-            place_location[0] = -0.3;
-            place_location[1] = 0.2;
-            place_location[2] = 0.0;
 
-            pick_or_place(fingers_closure, hand_orientation, pick_location, true);
-            bool ok = pick_or_place(fingers_closure, hand_orientation, place_location, false);
+
+            bool ok;
+
+            ok = pick_or_place(fingers_closure, hand_orientation, pick_location, true);
+            ok = pick_or_place(fingers_closure, hand_orientation, place_location, false);
             // we assume the robot is not moving now
             if (ok)
             {
                 reply.addString("ack");
-                reply.addString("Yeah! I did it! Maybe...");
+                //reply.addString("done with picking and placing!");
             }
-            else
-            {
+            else{
                 reply.addString("nack");
-                reply.addString("I don't see any object!");
             }
+
         }
         else
             // the father class already handles the "quit" command

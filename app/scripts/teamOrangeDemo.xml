@@ -1,17 +1,77 @@
 <application>
-    <name>Team Orange - Demo</name>
+<name>Team Orange</name>
 
-    <dependencies>
-    </dependencies>
+<dependencies>
+    <port>/icub/camcalib/left/out</port>
+    <port>/lbpExtract/extractedlbp:o</port>
 
-    <module>
-        <name>exampleModule</name>
-        <node>localhost</node>
-    </module>
+</dependencies>
 
-    <connection>
-        <from>/exampleconnection/:o</from>
-        <to>/exampleconnection/:i</to>
-        <protocol>udp</protocol>
-    </connection>
+<!-- Modules configurations -->
+
+<module>
+    <name>master</name>
+    <parameters>--whostarts robot</parameters>
+    <parameters>--initBoardPosition "(0 1 2 0 1 2)"</parameters>
+    <parameters>--GoalInit "(1 1 1)"</parameters>
+    <node>localhost</node>
+</module>
+
+<module>
+    <name>objRecognition</name>
+    <node>localhost</node>
+</module>
+
+<module>
+    <name>pickAndPlace</name>
+    <node>localhost</node>
+</module>
+
+<module>
+    <name>clapDuo</name>
+    <node>localhost</node>
+</module>
+
+<module>
+    <name>moveGrounding</name>
+    <node>localhost</node>
+</module>
+
+<module>
+    <name>movePlanner</name>
+    <node>localhost</node>
+</module>
+
+<!-- Connections of Modules -->
+
+<!-- rpcClient connection to Object Recognition Module-->
+<connection>
+    <from>/master/objReco/rpc:o</from>
+    <to>/objRecognition/rpc:i</to>
+</connection>
+
+<!-- rpcClient connection to ClapDuo Module-->
+<connection>
+    <from>/master/clap/rpc:o</from>
+    <to>/clapDuo/rpc:i</to>
+</connection>
+
+<!-- rpcClient connection to Move Planner Module-->
+<connection>
+    <from>/movePlanner/rpc:o</from>
+    <to>/moveGrouding/rpc:i</to>
+</connection>
+
+<!-- rpcClient connection to Pick And Place Module-->
+<connection>
+    <from>/master/pickAndPlace/rpc:o</from>
+    <to>/pickAndPlace/rpc:i</to>
+</connection>
+
+<!-- rpcClient connection to Move Grounding Module-->
+<connection>
+    <from>/master/moveGrounding/rpc:o</from>
+    <to>/moveGrounding/rpc:i</to>
+</connection>
+
 </application>

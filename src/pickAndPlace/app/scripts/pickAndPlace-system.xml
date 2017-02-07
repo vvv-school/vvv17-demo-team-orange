@@ -1,12 +1,21 @@
 <application>
 
-  <name>Assignment on Grasp It System</name>
+  <name>pickAndPlace System</name>
 
   <module>
       <name>yarplogger</name>
       <parameters>--start --no_stop</parameters>
       <node>localhost</node>
   </module>
+
+
+  <module>
+        <name>wholeBodyDynamics</name>
+        <parameters>--robot icubSim --dummy_ft --autoconnect</parameters>
+        <node>localhost</node>
+        <tag>wbd</tag>
+  </module>
+
 
   <module>
       <name>iCub_SIM</name>

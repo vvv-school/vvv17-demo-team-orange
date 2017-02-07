@@ -24,8 +24,13 @@ bool MasterModule::configure(yarp::os::ResourceFinder &rf) {
     moduleName = rf.check("name", Value("master"),"Module name (string)").asString();
     setName(moduleName.c_str());
 
-    string nameStarts = rf.check("whostarts", Value("robot"),"Who starts the game? (human/robot) (string)").asString();
-    
+    string nameStarts  = rf.check("whostarts", Value("robot"),"Who starts the game? (human/robot) (string)").asString();
+    Bottle *initBoard  = rf.find("initBoardPosition").asList();
+    Bottle *GoalInit   = rf.find("GoalInit").asList();
+    if(initBoard==NULL) {
+        yError() << "unable to parse initBoardPosition";
+        return false;
+    }
     bool whostarts;
     // parsing information
     if(nameStarts == "human" ||nameStarts == "Human" || nameStarts == "0" || nameStarts == "HUMAN")
@@ -54,7 +59,23 @@ bool MasterModule::configure(yarp::os::ResourceFinder &rf) {
         delete comunThread;
         return false;
     }
+    comunThread->mutexThread.lock();
+    comunThread->BoardPose.resize(6);
+    comunThread->BoardPose(0) = initBoard->get(0).asDouble();
+    comunThread->BoardPose(1) = initBoard->get(1).asDouble();
+    comunThread->BoardPose(2) = initBoard->get(2).asDouble();
+    
+    comunThread->BoardPose(3) = initBoard->get(3).asDouble();
+    comunThread->BoardPose(4) = initBoard->get(4).asDouble();
+    comunThread->BoardPose(5) = initBoard->get(5).asDouble();
 
+    comunThread->startPose.resize(3);
+    comunThread->startPose(0) = GoalInit->get(0).asDouble();
+    comunThread->startPose(1) = GoalInit->get(1).asDouble();
+    comunThread->startPose(2) = GoalInit->get(2).asDouble();
+    yInfo() << "Board Pose: " << comunThread->BoardPose.toString();
+    yInfo() << "Goal Pose: " << comunThread->startPose.toString();
+    comunThread->mutexThread.unlock();
     // Everything ok.
     yInfo() << "MasterModule: " << "Everything ok";
     return true;
@@ -120,7 +141,6 @@ bool MasterModule::triggerNextMove() {
 }
 
 
-
 //*************************************************************************************************************************************//
 //************                                                   MASTER THREAD                                                 ********//
 //*************************************************************************************************************************************//
@@ -138,6 +158,42 @@ void MasterThread::run(){
             Time::delay(0.4);  
             return;      
         }
+        else if(sendCommands){
+                Bottle cmd,reply;
+                cmd.clear();
+                reply.clear();
+                cmd.addString("setStart"); // Cups position NOT FINISHED!!!!!
+                cmd.addDouble(0);
+                cmd.addDouble(1);
+                cmd.addDouble(2);
+                rpcPickPlace.write(cmd,reply);
+               if(reply.size () <= 0) {
+                    yError() << "I have an empty Bottle from PicKPlace GoalPos...=/";
+                    return;
+                }
+                else if(reply.get(0).asString()=="nack") {
+                    yError() << "PicKPlace Set GoalPos not Ok";
+                    return;
+                }
+                cmd.clear();
+                reply.clear();
+                mutexThread.lock();
+                cmd.addString("init");
+                cmd.addDouble(BoardPose[0]);
+                cmd.addDouble(BoardPose[1]);
+                cmd.addDouble(BoardPose[2]);
+                cmd.addDouble(BoardPose[3]);
+                cmd.addDouble(BoardPose[4]);
+                cmd.addDouble(BoardPose[5]);
+                mutexThread.unlock();
+                rpcGameState.write(cmd,reply);
+                if(reply.size () <= 0) {
+                    yError() << "I have an empty Bottle from Game State BoardPos...=/";
+                    return;
+                }
+                // Send to     
+                sendCommands = false;    
+            }
         stateMachine();
     }
 }
@@ -171,6 +227,8 @@ void MasterThread::stateMachine() {
                 yInfo() << "stateMyturn= " << statemyturn;
                 yInfo() << "Sending Start Request to Object Recognition";
                 cmd.clear();
+
+                /*********/ 
                 cmd.addString("start");
                 rpcObjReco.write(cmd, reply);
                 if(reply.size () <= 0) {
@@ -211,18 +269,50 @@ void MasterThread::stateMachine() {
                 yInfo() << "I have received the next 3D position: ";
                 yInfo() << reply.toString();
                 mutexThread.lock();
-                NextMove = reply;
+                /*NextMove[0] = reply.get(0).asDouble();
+                NextMove[1] = reply.get(1).asDouble();
+                NextMove[2] = reply.get(2).asDouble();
+                */
+                Bottle *newBottle = reply.get(0).asList();
+
+                NextMove[0] =newBottle->get(0).asDouble();
+                NextMove[1] =newBottle->get(1).asDouble();
+                NextMove[2] =newBottle->get(2).asDouble();
                 mutexThread.unlock();
+                yInfo() <<"Vector: "<< NextMove.toString();    
                 statemyturn++;
             }
             case 2: // COMMAND THE PICK AND PLACE MODULE TO THE NEXT 3D POSITION
             {   yInfo() << "stateMyturn= " << statemyturn;
-                cmd = reply;
+                
+                cmd.clear();
                 reply.clear();
+                cmd.addString("setGoal");
+                cmd.addDouble(NextMove[0]);
+                cmd.addDouble(NextMove[1]);
+                cmd.addDouble(NextMove[2]);
+                rpcPickPlace.write(cmd,reply); //setGoal Bottle 3 doubles.
+                if(reply.size () <= 0) {
+                    yError() << " PickPlace empty Bottle in goal position";
+                }
+                else{
+                    string received = reply.get(0).asString();            
+                    if(received!="ack") {
+                        yError() << " PickPlace doesn't receive the goal position";
+                    }
+                }
+                cmd.clear();
+                reply.clear();
+                cmd.addString("pickAndPlace");
                 rpcPickPlace.write(cmd,reply);
                 if(reply.size () <= 0) {
-                    yError() << "I received a empty Bottle from the PickPlace module";
-                    break;
+                    yError() << " PickPlace empty Bottle in pickPlace task";
+                }
+                else{
+                    string received = reply.get(0).asString();              
+                    if(received!="ack") {
+                        yError() << " PickPlace task not completed with sucess";
+                    }
                 }
                 statemyturn = 0;
                 myturn = false;
@@ -247,7 +337,9 @@ bool MasterThread::threadInit(){
     }
     running = true;
     clapReceived = false;
+    sendCommands = true;
     statemyturn=0;
+    NextMove.resize(3);
     return true;
 }
 
@@ -300,8 +392,9 @@ void MasterThread::afterStart(bool s){
     if (s) {
         yInfo() << "Master Thread started =D";
     }
-    else
+    else {
         yError() << "Reading Thread did not start";
+    }
 }
 bool MasterThread::interrupt(){
     yInfo()<< "MasterThread: " << "Interrupt ports";

@@ -20,14 +20,14 @@ whostarts: Who is the first, the robot or the human (default - robot)
 
 3. Output Ports:
 
-                /objReco/rpc:o -    rpcClient connection to Object Recognition Module
+                /master/objReco/rpc:o -    rpcClient connection to Object Recognition Module
                 
-                /clap/rpc:o         rpcClient connection to ClapDuo Module
+                /master/clap/rpc:o         rpcClient connection to ClapDuo Module
                 
-                /planner/rpc:o      rpcClient connection to planner Module (not used?)
+                /master/planner/rpc:o      rpcClient connection to planner Module (not used?)
                 
-                /pickandplace/rpc:o rpcClient connection to pickAndPlace Module
+                /master/pickandplace/rpc:o rpcClient connection to pickAndPlace Module
                 
-                /moveGrounding/rpc:o    rpcClient connection to Grounding Module
+                /master/moveGrounding/rpc:o    rpcClient connection to Grounding Module
                 
-                /emotions/rpc:o     rpcClient connection to Emotions Module
+                /master/emotions/rpc:o     rpcClient connection to Emotions Module
