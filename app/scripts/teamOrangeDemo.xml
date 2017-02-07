@@ -12,8 +12,8 @@
 <module>
     <name>master</name>
     <parameters>--parameter1 value</parameters>
-    <parameters>--parameter2 value</paremeters>
-    <parameters>--parameter3 value</paremeters>
+    <parameters>--parameter2 value</parameters>
+    <parameters>--parameter3 value</parameters>
     <node>localhost</node>
 </module>
 
