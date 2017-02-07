@@ -14,7 +14,9 @@ class MASTER_IDL : public yarp::os::Wire {
 public:
   MASTER_IDL();
   virtual bool update();
+  virtual bool reset();
   virtual bool quit();
+  virtual bool triggerNextMove();
   virtual bool read(yarp::os::ConnectionReader& connection);
   virtual std::vector<std::string> help(const std::string& functionName="--all");
 };

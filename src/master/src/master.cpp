@@ -14,27 +14,120 @@ double MasterModule::getPeriod() {
     return 0.0;
 }
 
+bool MasterModule::configure(yarp::os::ResourceFinder &rf) {
+
+
+    //Closing FALSE
+    closing=false;
+    // Module name
+    moduleName = rf.check("name", Value("master"),"Module name (string)").asString();
+    setName(moduleName.c_str());
+
+    rpcPortName = "/" + moduleName + "/rpc:i";
+
+
+    // open RPC server port
+    if (!rpcPort.open(rpcPortName.c_str()))
+    {
+        yError("%s : Unable to open port %s\n", getName().c_str(), rpcPortName.c_str());
+        return false;
+    }
+    attach(rpcPort);
+
+    rpcObjRecoName="/objReco/";
+    if (!rpcObjReco.open("/"+moduleName+rpcObjRecoName+"rpc:o"))
+    {
+        yError("%s : Unable to open port %s\n", getName().c_str(), rpcObjRecoName.c_str());
+        return false;
+    }
+    rpcSpeechName = "/speech/";
+    if (!rpcSpeech.open("/"+moduleName+rpcSpeechName+"rpc:o"))
+    {
+        yError("%s : Unable to open port %s\n", getName().c_str(), rpcSpeechName.c_str());
+        return false;
+    }
+    rpcPlannerName = "/planner/";
+    if (!rpcPlanner.open("/"+moduleName+rpcPlannerName+"rpc:o"))
+    {
+        yError("%s : Unable to open port %s\n", getName().c_str(), rpcPlannerName.c_str());
+        return false;
+    }
+    rpcPickPlaceName = "/pick/";
+    if (!rpcPickPlace.open("/"+moduleName+rpcPickPlaceName+"rpc:o"))
+    {
+        yError("%s : Unable to open port %s\n", getName().c_str(), rpcPickPlaceName.c_str());
+        return false;
+    }
+    rpcGameStateName = "/gameState/";
+    if (!rpcGameState.open("/"+moduleName+rpcGameStateName+"rpc:o"))
+    {
+        yError("%s : Unable to open port %s\n", getName().c_str(), rpcGameStateName.c_str());
+        return false;
+    }
+
+    // Everything ok.
+    yInfo() << "Everything ok";
+    return true;
+
+}
+
 /*IDL Functions*/
 bool MasterModule::quit() {
-    cout << "Received Quit command in RPC" << endl;
+    yInfo() << "Received Quit command in RPC";
+    closing = true;
     return true;
 }
 
+// To update the model externally... just if needed
 bool MasterModule::update(){
-}
-
-bool MasterModule::configure(yarp::os::ResourceFinder &rf) {
+    return true;
 }
 
 bool MasterModule::attach(RpcServer &source)
 {
     return this->yarp().attachAsServer(source);
+
 }
 
 bool MasterModule::close() {
+    yInfo() << "Calling close function";
+    rpcPort.close();
+    rpcObjReco.close();
+    rpcSpeech.close();
+    rpcPlanner.close();
+    rpcPickPlace.close();
+    rpcGameState.close();
+    return true;
 }
 
 bool MasterModule::interruptModule() {
+    yInfo() << "Calling interrupt Module function";
+    rpcPort.interrupt();
+    rpcObjReco.interrupt();
+    rpcSpeech.interrupt();
+    rpcPlanner.interrupt();
+    rpcPickPlace.interrupt();
+    rpcGameState.interrupt();
+    return true;
 }
 bool MasterModule::updateModule() {
+    // If nothing is connected to the master
+    //yInfo() << "running";
+    if(rpcObjReco.getOutputCount()<=0 && rpcSpeech.getOutputCount()<=0 && rpcPlanner.getOutputCount()<=0 && rpcPickPlace.getOutputCount()<=0 && rpcGameState.getOutputCount()<=0) {
+        //yInfo() << "Waiting for connection...";        
+        //Time::delay(0.1);        
+        return !closing;
+    }
+    yInfo() << "Comunication Started";
+    return !closing;
+}
+
+// reset the game
+bool MasterModule::reset() {
+    yInfo() << "Received reset command in RPC";
+    return true;
+}
+bool MasterModule::triggerNextMove() {
+    yInfo() << "Received triggerNextMove command in RPC";
+    return true;
 }

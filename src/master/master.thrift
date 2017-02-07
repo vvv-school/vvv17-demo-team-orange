@@ -15,5 +15,7 @@ yarp.includefile="yarp/os/Bottle.h"
 service MASTER_IDL
 {
   bool update();
-  bool quit();  
+  bool reset();
+  bool quit();
+  bool triggerNextMove();  
 }

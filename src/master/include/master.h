@@ -16,6 +16,8 @@
 #include <yarp/os/RpcClient.h>
 #include <yarp/os/Time.h>
 #include <yarp/os/Vocab.h>
+#include <yarp/os/Log.h>
+#include <yarp/os/LogStream.h>
 
 #include <fstream>
 #include <string>
@@ -57,6 +59,17 @@ private:
     yarp::os::RpcClient rpcSpeech;
     yarp::os::RpcClient rpcPlanner;
     yarp::os::RpcClient rpcPickPlace;
+    yarp::os::RpcClient rpcGameState;
+
+    string rpcPortName;
+    string rpcObjRecoName;
+    string rpcSpeechName;
+    string rpcPlannerName;
+    string rpcPickPlaceName;
+    string rpcGameStateName;
+
+    bool closing;
+
 public:
     
     double getPeriod();
@@ -69,5 +82,7 @@ public:
     bool attach(yarp::os::RpcServer &source);
     bool update();
     bool quit();
+    bool reset();
+    bool triggerNextMove();
 };
-#endif // MASTER_H
+#endif // MASTER_HrpcSpeech
