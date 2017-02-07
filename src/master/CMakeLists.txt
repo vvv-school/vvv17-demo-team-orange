@@ -1,5 +1,5 @@
 # Copyright: (C) VVV17, Santa Margherita
-#C opyright: (C) Team Orange
+# Copyright: (C) Team Orange
 # Authors: Pedro Vicente <pvicente@isr.ist.utl.pt>
 # CopyPolicy: Released under the terms of the GNU GPL v2.0.
 
