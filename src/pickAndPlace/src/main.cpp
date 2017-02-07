@@ -37,7 +37,9 @@ protected:
     Vector pick_location;
     Vector place_location;
 
-    RpcServer rpcPort;
+    RpcServer inputPort;
+
+    RpcClient biasPort;
     BufferedPort<Vector> inPort;
     ObjectRetriever object;
 
@@ -96,6 +98,9 @@ protected:
         yInfo()<<"Reached approach position. Going down now.";
 
         // reset the force sensors here!
+        Bottle cmd;
+        cmd.addInt(0);
+        biasPort.write(cmd);
 
         iarm->goToPoseSync(x, o); // should use force feedback at some point
         bool motion_done = false;
@@ -105,18 +110,21 @@ protected:
         while(!motion_done && !force_detected){
             iarm->checkMotionDone(&motion_done); // or force detected
 
-//            // read force input port
-//            Vector *forceData = inPort.read();
-//            if(forceData == YARP_NULLPTR){
-//                yError()<<"error reading port";
-//                force_detected = true; // to stop the motion
-//            }
-//            else{
-//                if ((*forceData)[2] > force_threshold)
-//                {
-//                    force_detected = true;
-//                }
-//            }
+            // read force input port
+            Vector *forceData = inPort.read();
+            yInfo()<<"Force data is "<<(*forceData).toString();
+            if(forceData == YARP_NULLPTR){
+                yError()<<"error reading port";
+                force_detected = true; // to stop the motion
+            }
+            else{
+                if ((*forceData)[2] > force_threshold)
+                {
+                    force_detected = true;
+                    yInfo()<<"Force threshold exceeded";
+                }
+            }
+            Time::delay(0.2);
 
 
         }
@@ -412,8 +420,11 @@ public:
         drvGaze.view(igaze);
         igaze->storeContext(&startup_ctxt_gaze);
 
-        rpcPort.open("/pickAndPlace/rpc:i");
-        attach(rpcPort);
+        inputPort.open("/pickAndPlace/rpc:i");
+        attach(inputPort);
+
+        biasPort.open("/wholeBodyDynamics/rpc:i");
+
 
 
         if (!inPort.open("/relay/in")) {
@@ -448,7 +459,7 @@ public:
         drvGaze.close();
         drvHandR.close();
         drvHandL.close();
-        rpcPort.close();
+        inputPort.close();
         return true;
     }
 
