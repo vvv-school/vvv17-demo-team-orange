@@ -9,6 +9,7 @@
 #define MASTER_H
 
 #include <yarp/os/Bottle.h>
+#include <yarp/sig/Vector.h>
 #include <yarp/os/BufferedPort.h>
 #include <yarp/os/Mutex.h>
 #include <yarp/os/RateThread.h>
@@ -25,6 +26,7 @@
 #include "MASTER_IDL.h"
 
 using namespace yarp::os;
+using namespace yarp::sig;
 using namespace std;
 
 
@@ -46,9 +48,13 @@ public:
     bool running;
     bool myturn;
     bool clapReceived;
+    bool sendCommands;    
     int statemyturn;
     Bottle ObjectLoc;
-    Bottle NextMove;
+    Vector NextMove;
+    Vector BoardPose;
+    Vector startPose;
+    
 
 private:
 
