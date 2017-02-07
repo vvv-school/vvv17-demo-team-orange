@@ -33,7 +33,7 @@ public:
     MasterThread(string Name,bool whostarts,int r);
     string moduleName;
     
-    Mutex guard;
+    Mutex mutexThread;
     virtual bool threadInit();
     
     //called by start after threadInit, s is true iff the thread started
@@ -45,7 +45,10 @@ public:
     bool close();
     bool running;
     bool myturn;
-    
+    bool clapReceived;
+    int statemyturn;
+    Bottle ObjectLoc;
+    Bottle NextMove;
 
 private:
 

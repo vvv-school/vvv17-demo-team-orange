@@ -96,7 +96,6 @@ bool MasterModule::interruptModule() {
     yInfo() <<"MasterModule: " << "Calling interrupt Module function";
     rpcPort.interrupt();
     comunThread->interrupt();
-    yInfo() <<"MasterModule: " << "DONE?!";
     return true;
 }
 bool MasterModule::updateModule() {
@@ -113,6 +112,10 @@ bool MasterModule::reset() {
 }
 bool MasterModule::triggerNextMove() {
     yInfo() << "MasterModule: " << "Received triggerNextMove command in RPC";
+    comunThread->mutexThread.lock();
+    comunThread->clapReceived = true;
+    comunThread->mutexThread.unlock();
+    
     return true;
 }
 
@@ -130,24 +133,110 @@ MasterThread::MasterThread(string Name, bool whostarts, int r) : RateThread(r) {
 void MasterThread::run(){
     // Game State machine...
     if(running) {
-        if(rpcObjReco.getOutputCount()<=0) {// || rpcSpeech.getOutputCount()<=0 || rpcPlanner.getOutputCount()<=0 || rpcPickPlace.getOutputCount()<=0 || rpcGameState.getOutputCount()<=0) {
+        if(rpcObjReco.getOutputCount()<=0 || rpcClap.getOutputCount()<=0 || rpcPlanner.getOutputCount()<=0 || rpcPickPlace.getOutputCount()<=0 || rpcGameState.getOutputCount()<=0) {
             yInfo() << "MasterThread: Waiting for connections...";        
             Time::delay(0.4);  
             return;      
         }
-        yInfo() << "MasterThread: Comunication Started";
-        Bottle cmd,reply;
-        cmd.addDouble(1);
-        rpcObjReco.write(cmd,reply);
-        
-
-
         stateMachine();
     }
 }
 
 void MasterThread::stateMachine() {
 
+    Bottle cmd, reply;
+    // Not My Turn
+    if(!myturn) {
+        yInfo() << "It's not my turn";
+        mutexThread.lock();
+        if(clapReceived) { 
+            yInfo() << "But, I have received a Clap";
+            myturn=true; 
+            clapReceived = false;
+            mutexThread.unlock();
+            return;
+        }
+        else {
+            mutexThread.unlock();
+            Time::delay(0.5);
+            return;
+        }
+    }
+    // My Turn
+    else {
+        switch (statemyturn) {
+
+            case 0: // GET 3D position of The Objects
+            {
+                yInfo() << "stateMyturn= " << statemyturn;
+                yInfo() << "Sending Start Request to Object Recognition";
+                cmd.clear();
+                cmd.addString("start");
+                rpcObjReco.write(cmd, reply);
+                if(reply.size () <= 0) {
+                    yError() << "I received a empty Bottle from the Object Recognition";
+                    break;
+                }
+                // READ FROM STREAMING
+                
+                cmd.clear();
+                cmd.addString("stop");
+                rpcObjReco.write(cmd, reply);
+
+                mutexThread.lock();
+                ObjectLoc = reply;
+                mutexThread.unlock();
+
+                yInfo() << "Receive Object Recognition Bottle: ";
+                yInfo() << reply.toString();
+                statemyturn++;
+            }
+            case 1: // SEND OBJECT LOCATION TO GROUNDING AND RECEIVE NEXT 3D POSITION TO PUT THE OBJECT
+            {
+                yInfo() << "stateMyturn= " << statemyturn;
+                if(reply.size () <= 0) {
+                    yError() << "I have an empty Bottle stateturn is wrong...=/";
+                    statemyturn=0;
+                    yInfo() << "New State turn: " << statemyturn;
+                    break;
+                }
+                yInfo() << "Sending Object Location to grounding aka gameState";
+                cmd=reply;
+                reply.clear();
+                rpcGameState.write(cmd, reply);
+                if(reply.size () <= 0) {
+                    yError() << "I received a empty Bottle from the Grounding aka gameState";
+                    break;
+                }
+                yInfo() << "I have received the next 3D position: ";
+                yInfo() << reply.toString();
+                mutexThread.lock();
+                NextMove = reply;
+                mutexThread.unlock();
+                statemyturn++;
+            }
+            case 2: // COMMAND THE PICK AND PLACE MODULE TO THE NEXT 3D POSITION
+            {   yInfo() << "stateMyturn= " << statemyturn;
+                cmd = reply;
+                reply.clear();
+                rpcPickPlace.write(cmd,reply);
+                if(reply.size () <= 0) {
+                    yError() << "I received a empty Bottle from the PickPlace module";
+                    break;
+                }
+                statemyturn = 0;
+                myturn = false;
+            }
+            default:
+            {
+                yError() << "Something when wrong. stateMyturn= " << statemyturn;
+                statemyturn=0; // Start the move ;)
+                yInfo() << "Starting the move. stateMyturn= " << statemyturn;
+            }
+        
+        
+        }
+    }
 }
 bool MasterThread::threadInit(){
 
@@ -157,6 +246,8 @@ bool MasterThread::threadInit(){
         return false;
     }
     running = true;
+    clapReceived = false;
+    statemyturn=0;
     return true;
 }
 
@@ -172,9 +263,9 @@ bool MasterThread::openPorts()
         return false;
     }
     rpcClapName = "/clap/";
-    if (!rpcSpeech.open("/"+moduleName+rpcClapName+"rpc:o"))
+    if (!rpcClap.open("/"+moduleName+rpcClapName+"rpc:o"))
     {
-        yError("%s : Unable to open port %s\n", moduleName.c_str(), rpcSpeechName.c_str());
+        yError("%s : Unable to open port %s\n", moduleName.c_str(), rpcClapName.c_str());
         return false;
     }
     rpcPlannerName = "/planner/";
@@ -189,7 +280,7 @@ bool MasterThread::openPorts()
         yError("%s : Unable to open port %s\n", moduleName.c_str(), rpcPickPlaceName.c_str());
         return false;
     }
-    rpcGameStateName = "/gameState/";
+    rpcGameStateName = "/moveGrounding/";
     if (!rpcGameState.open("/"+moduleName+rpcGameStateName+"rpc:o"))
     {
         yError("%s : Unable to open port %s\n", moduleName.c_str(), rpcGameStateName.c_str());
@@ -216,10 +307,11 @@ bool MasterThread::interrupt(){
     yInfo()<< "MasterThread: " << "Interrupt ports";
     running=false;
     rpcObjReco.interrupt();
-    rpcSpeech.interrupt();
+    rpcClap.interrupt();
     rpcPlanner.interrupt();
     rpcPickPlace.interrupt();
     rpcGameState.interrupt();
+    rpcEmotions.interrupt();
     return true;
 }
 bool MasterThread::close() {
@@ -227,10 +319,11 @@ bool MasterThread::close() {
     yInfo () << "MasterThread: " << "closing ports";
     running=false;
     rpcObjReco.close();
-    rpcSpeech.close();
+    rpcClap.close();
     rpcPlanner.close();
     rpcPickPlace.close();
     rpcGameState.close();
+    rpcEmotions.close();
     return true;
 
 }

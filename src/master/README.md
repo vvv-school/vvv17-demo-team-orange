@@ -28,6 +28,6 @@ whostarts: Who is the first, the robot or the human (default - robot)
                 
                 /pickandplace/rpc:o rpcClient connection to pickAndPlace Module
                 
-                /gameState/rpc:o    rpcClient connection to gameState Module
+                /moveGrounding/rpc:o    rpcClient connection to Grounding Module
                 
                 /emotions/rpc:o     rpcClient connection to Emotions Module
