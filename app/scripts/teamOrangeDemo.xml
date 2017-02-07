@@ -1,5 +1,5 @@
 <application>
-<name>Pick And Place</name>
+<name>Team Orange</name>
 
 <dependencies>
     <port>/icub/camcalib/left/out</port>
