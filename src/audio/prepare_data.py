@@ -74,6 +74,23 @@ def check_if_timing_in_annotations( timing, annotations, threshold = 15 ):
             return True
     return False
 
+def get_spectrogram( audio, sample_rate, step = 10, window = 20, max_freq = None ):
+    if audio.ndim >= 2:
+        audio = np.mean(audio, axis = 0)
+    hop_length = int(0.001 * step * sample_rate)
+    fft_length = int(0.001 * window * sample_rate)
+
+    # return np.transpose( melspectrogram(audio, sr = sample_rate,hop_length=hop_length,
+    #                                    n_fft = fft_length, fmax = max_freq) ).astype(np.float32)
+    S = melspectrogram(audio, sr=sample_rate, hop_length=hop_length,
+                       n_fft=fft_length, fmax=max_freq, n_mels=40)
+    rms = librosa.feature.rmse(S=S)
+    mfcc = librosa.feature.mfcc(n_mfcc=13, S=librosa.logamplitude(S))
+    mfcc_delta = librosa.feature.delta(mfcc)
+
+    total_mfcc = np.vstack((rms, mfcc, mfcc_delta))
+    # total_mfcc = mfcc
+    return np.transpose(total_mfcc).astype(np.float32)
 
 def spectrogram_from_file_librosa( filename,step  = 10, window = 20, max_freq = None ):
     with soundfile.SoundFile(filename) as sound_file:
@@ -88,20 +105,21 @@ def spectrogram_from_file_librosa( filename,step  = 10, window = 20, max_freq = 
                              " sample rate")
         if step > window:
             raise ValueError("step size must not be greater than window size")
-        hop_length = int(0.001 * step * sample_rate)
-        fft_length = int(0.001 * window * sample_rate)
-
-        #return np.transpose( melspectrogram(audio, sr = sample_rate,hop_length=hop_length,
-        #                                    n_fft = fft_length, fmax = max_freq) ).astype(np.float32)
-        S = melspectrogram(audio, sr = sample_rate,hop_length=hop_length,
-                                            n_fft = fft_length, fmax = max_freq, n_mels = 40)
-        rms = librosa.feature.rmse(S=S)
-        mfcc = librosa.feature.mfcc(n_mfcc = 13, S=librosa.logamplitude(S))
-        mfcc_delta = librosa.feature.delta(mfcc)
-
-        total_mfcc = np.vstack( (rms, mfcc, mfcc_delta) )
-        #total_mfcc = mfcc
-        return np.transpose(total_mfcc ).astype(np.float32)
+        # hop_length = int(0.001 * step * sample_rate)
+        # fft_length = int(0.001 * window * sample_rate)
+        #
+        # #return np.transpose( melspectrogram(audio, sr = sample_rate,hop_length=hop_length,
+        # #                                    n_fft = fft_length, fmax = max_freq) ).astype(np.float32)
+        # S = melspectrogram(audio, sr = sample_rate,hop_length=hop_length,
+        #                                     n_fft = fft_length, fmax = max_freq, n_mels = 40)
+        # rms = librosa.feature.rmse(S=S)
+        # mfcc = librosa.feature.mfcc(n_mfcc = 13, S=librosa.logamplitude(S))
+        # mfcc_delta = librosa.feature.delta(mfcc)
+        #
+        # total_mfcc = np.vstack( (rms, mfcc, mfcc_delta) )
+        # #total_mfcc = mfcc
+        # return np.transpose(total_mfcc ).astype(np.float32)
+        return get_spectrogram( audio, sample_rate, step = step, window = window, max_freq = max_freq )
 
 
 def create_temporal_dataset( directory ):
@@ -149,6 +167,7 @@ def create_temporal_dataset( directory ):
     return X,Y
 
 
+
 def get_sequences(lst_all_sequences, lst_all_sequence_labels, sequence_length, sequence_hop):
 
     res_X = []
@@ -168,7 +187,7 @@ def get_sequences(lst_all_sequences, lst_all_sequence_labels, sequence_length, s
                 label = 0
 
             if label == 0:
-                if np.random.random() > 0.7:
+                if np.random.random() > 0.85:
                     continue
             squashed_X = compose_vector_of_functionals( subset_X )
             res_X.append(  np.expand_dims( squashed_X, axis = 0 )  )

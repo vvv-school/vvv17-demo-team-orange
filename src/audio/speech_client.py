@@ -2,12 +2,17 @@ from __future__ import print_function
 import os
 import sys
 
+import joblib
 from librosa.feature import rmse
+
+from prepare_data import get_spectrogram, compose_vector_of_functionals
+from rnn_model import get_model
 
 sys.path.append("/home/egor/robot-install/lib/python2.7/dist-packages")
 import yarp
 import numpy as np
 import librosa
+import time
 
 yarp.Network.init()
 
@@ -30,8 +35,34 @@ SAMPLE_RATE = 48000
 RES_WAV_FILE = "/home/egor/test_numpy.wav"
 USE_NN_DETECTOR = True
 
-def nn_detector( signal, sample_rate ):
-    return True
+model = get_model( num_features= 216 )
+model.load_weights( "./models/rnn_model.h5" )
+train_mean, train_std = joblib.load( "./cache/train_mean_std.dat" )
+print("Loaded data")
+
+def nn_detector( signal, sample_rate, frames_to_classify = 4 ):
+    start_time = time.time()
+    features = get_spectrogram( signal, sample_rate, window = 10, step = 10, max_freq = 8000 )
+    input = []
+    for i in range(0, features.shape[0], frames_to_classify):
+        subset = features[i:i + frames_to_classify]
+        if len(subset) < frames_to_classify:
+            continue
+        input.append( np.expand_dims(compose_vector_of_functionals(subset), axis = 0) )
+    input = np.vstack( input )
+    input = (input - train_mean) / (train_std + 1e-8)
+    pred = model.predict( input )
+    pred = pred.ravel()
+    #print(pred)
+    pred = [1 if p > 0.65 else 0 for p in pred]
+    total_time = time.time() - start_time
+    print("Prediction took:{}".format( total_time ))
+    print(pred)
+    if sum(pred) > 4:
+        return False
+    else:
+        print("*** Detected clap ***")
+        return True
 
 def rms_detector( signal, sample_rate, threshold = 4.0 ):
     averaged_signal = np.mean(signal, axis=0)
@@ -87,7 +118,7 @@ while True:
             whole_rec = np.hstack( (whole_rec, res) )
         else:
             whole_rec = res
-        #print("1 sec is gone:{}".format(whole_rec.shape[1]))
+        print("1 sec is gone:{}".format(whole_rec.shape[1]))
         #truncate
         #if whole_rec.shape[1] > SAMPLE_RATE * 2:
         #    whole_rec =
