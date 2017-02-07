@@ -1,3 +1,8 @@
+# Copyright: (C) VVV17, Santa Margherita
+# Copyright: (C) Team Orange
+# Authors: Lukas Kaul and David Busson
+# CopyPolicy: Released under the terms of the GNU GPL v2.0.
+
 # requires minimum cmake version
 cmake_minimum_required(VERSION 2.8.9)
 
