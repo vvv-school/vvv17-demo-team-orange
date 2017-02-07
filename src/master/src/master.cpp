@@ -1,7 +1,7 @@
 /****************************************************************** 
 **  Copyright: (C) VVV17, Santa Margherita
 **  Copyright: (C) Team Orange
-**  Authors: Pedro Vicente <pvicente@isr.ist.utl.pt>
+**  Authors: Pedro Vicente <pvicente@isr.tecnico.ulisboa.pt>
 **  CopyPolicy: Released under the terms of the GNU GPL v2.0.
 *******************************************************************/
 
@@ -24,6 +24,15 @@ bool MasterModule::configure(yarp::os::ResourceFinder &rf) {
     moduleName = rf.check("name", Value("master"),"Module name (string)").asString();
     setName(moduleName.c_str());
 
+    string nameStarts = rf.check("whostarts", Value("robot"),"Who starts the game? (human/robot) (string)").asString();
+    
+    bool whostarts;
+    // parsing information
+    if(nameStarts == "human" ||nameStarts == "Human" || nameStarts == "0" || nameStarts == "HUMAN")
+        whostarts = false; // human turn
+    else
+        whostarts = true; // robot turn
+    setName(moduleName.c_str());
     rpcPortName = "/" + moduleName + "/rpc:i";
 
 
@@ -38,8 +47,7 @@ bool MasterModule::configure(yarp::os::ResourceFinder &rf) {
     threadPeriod = rf.check("threadPeriod", Value(0.033), "Master thread period key value(double) in seconds ").asDouble();
 
     // launch thread    
-    comunThread = new MasterThread(moduleName,
-                                threadPeriod);
+    comunThread = new MasterThread(moduleName,whostarts,threadPeriod);
     
     /* Start masterthread */
     if (!comunThread->start()) {
@@ -114,8 +122,9 @@ bool MasterModule::triggerNextMove() {
 //************                                                   MASTER THREAD                                                 ********//
 //*************************************************************************************************************************************//
  
-MasterThread::MasterThread(string Name,int r) : RateThread(r) {
+MasterThread::MasterThread(string Name, bool whostarts, int r) : RateThread(r) {
     moduleName = Name;
+    myturn = whostarts;
 };
 
 void MasterThread::run(){
@@ -162,8 +171,8 @@ bool MasterThread::openPorts()
         yError("%s : Unable to open port %s\n", moduleName.c_str(), rpcObjRecoName.c_str());
         return false;
     }
-    rpcSpeechName = "/speech/";
-    if (!rpcSpeech.open("/"+moduleName+rpcSpeechName+"rpc:o"))
+    rpcClapName = "/clap/";
+    if (!rpcSpeech.open("/"+moduleName+rpcClapName+"rpc:o"))
     {
         yError("%s : Unable to open port %s\n", moduleName.c_str(), rpcSpeechName.c_str());
         return false;
@@ -174,7 +183,7 @@ bool MasterThread::openPorts()
         yError("%s : Unable to open port %s\n", moduleName.c_str(), rpcPlannerName.c_str());
         return false;
     }
-    rpcPickPlaceName = "/pick/";
+    rpcPickPlaceName = "/pickandplace/";
     if (!rpcPickPlace.open("/"+moduleName+rpcPickPlaceName+"rpc:o"))
     {
         yError("%s : Unable to open port %s\n", moduleName.c_str(), rpcPickPlaceName.c_str());
@@ -184,6 +193,12 @@ bool MasterThread::openPorts()
     if (!rpcGameState.open("/"+moduleName+rpcGameStateName+"rpc:o"))
     {
         yError("%s : Unable to open port %s\n", moduleName.c_str(), rpcGameStateName.c_str());
+        return false;
+    }
+    rpcEmotionsName = "/emotions/";
+    if (!rpcEmotions.open("/"+moduleName+rpcEmotionsName+"rpc:o"))
+    {
+        yError("%s : Unable to open port %s\n", moduleName.c_str(), rpcEmotionsName.c_str());
         return false;
     }
 
