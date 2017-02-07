@@ -11,9 +11,9 @@
 
 <module>
     <name>master</name>
-    <parameters>--parameter1 value</parameters>
-    <parameters>--parameter2 value</parameters>
-    <parameters>--parameter3 value</parameters>
+    <parameters>--whostarts robot</parameters>
+    <parameters>--initBoardPosition "(0 1 2 0 1 2)"</parameters>
+    <parameters>--GoalInit "(1 1 1)"</parameters>
     <node>localhost</node>
 </module>
 
