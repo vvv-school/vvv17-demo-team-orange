@@ -1,5 +1,5 @@
 <application>
-<name>Pick And Place</name>
+<name>Team Orange</name>
 
 <dependencies>
     <port>/icub/camcalib/left/out</port>
@@ -18,8 +18,7 @@
 </module>
 
 <module>
-    <name>objReco</name>
-    <parameters>--parameter1</parameters>
+    <name>objRecognition</name>
     <node>localhost</node>
 </module>
 
@@ -47,14 +46,14 @@
 
 <!-- rpcClient connection to Object Recognition Module-->
 <connection>
-    <from>/objReco/rpc:o</from>
-    <to>/master/rpc:i</to>
+    <from>/master/objReco/rpc:o</from>
+    <to>/objRecognition/rpc:i</to>
 </connection>
 
 <!-- rpcClient connection to ClapDuo Module-->
 <connection>
-    <from>/clapDuo/rpc:o</from>
-    <to>/master/rpc:i</to>
+    <from>/master/clap/rpc:o</from>
+    <to>/clapDuo/rpc:i</to>
 </connection>
 
 <!-- rpcClient connection to Move Planner Module-->
@@ -65,14 +64,14 @@
 
 <!-- rpcClient connection to Pick And Place Module-->
 <connection>
-    <from>/pickAndPlace/rpc:o</from>
-    <to>/master/rpc:i</to>
+    <from>/master/pickAndPlace/rpc:o</from>
+    <to>/pickAndPlace/rpc:i</to>
 </connection>
 
 <!-- rpcClient connection to Move Grounding Module-->
 <connection>
-    <from>/moveGrounding/rpc:o</from>
-    <to>/master/rpc:i</to>
+    <from>/master/moveGrounding/rpc:o</from>
+    <to>/moveGrounding/rpc:i</to>
 </connection>
 
 </application>
