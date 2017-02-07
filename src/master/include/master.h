@@ -69,7 +69,7 @@ private:
     string rpcGameStateName;
 
     bool closing;
-
+    bool starting;
 public:
     
     double getPeriod();
@@ -82,6 +82,7 @@ public:
     bool attach(yarp::os::RpcServer &source);
     bool update();
     bool quit();
+    bool start();
     bool reset();
     bool triggerNextMove();
 };

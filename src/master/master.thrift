@@ -17,5 +17,6 @@ service MASTER_IDL
   bool update();
   bool reset();
   bool quit();
+  bool start();
   bool triggerNextMove();  
 }

@@ -17,8 +17,9 @@ double MasterModule::getPeriod() {
 bool MasterModule::configure(yarp::os::ResourceFinder &rf) {
 
 
-    //Closing FALSE
+    //Closing/starting FALSE
     closing=false;
+    starting=false;
     // Module name
     moduleName = rf.check("name", Value("master"),"Module name (string)").asString();
     setName(moduleName.c_str());
@@ -82,7 +83,11 @@ bool MasterModule::quit() {
 bool MasterModule::update(){
     return true;
 }
-
+bool MasterModule::start(){
+    starting = true;
+    yInfo() << "Received Starting comming... Let's PLAY!!!";
+    return true;
+}
 bool MasterModule::attach(RpcServer &source)
 {
     return this->yarp().attachAsServer(source);
@@ -113,9 +118,9 @@ bool MasterModule::interruptModule() {
 bool MasterModule::updateModule() {
     // If nothing is connected to the master
     //yInfo() << "running";
-    if(rpcObjReco.getOutputCount()<=0 && rpcSpeech.getOutputCount()<=0 && rpcPlanner.getOutputCount()<=0 && rpcPickPlace.getOutputCount()<=0 && rpcGameState.getOutputCount()<=0) {
-        //yInfo() << "Waiting for connection...";        
-        //Time::delay(0.1);        
+    if(!starting || rpcObjReco.getOutputCount()<=0 || rpcSpeech.getOutputCount()<=0 || rpcPlanner.getOutputCount()<=0 || rpcPickPlace.getOutputCount()<=0 || rpcGameState.getOutputCount()<=0) {
+        yInfo() << "Waiting for connections...";        
+        Time::delay(0.4);        
         return !closing;
     }
     yInfo() << "Comunication Started";

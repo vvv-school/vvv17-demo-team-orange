@@ -30,6 +30,14 @@ public:
   virtual bool read(yarp::os::ConnectionReader& connection);
 };
 
+class MASTER_IDL_start : public yarp::os::Portable {
+public:
+  bool _return;
+  void init();
+  virtual bool write(yarp::os::ConnectionWriter& connection);
+  virtual bool read(yarp::os::ConnectionReader& connection);
+};
+
 class MASTER_IDL_triggerNextMove : public yarp::os::Portable {
 public:
   bool _return;
@@ -101,6 +109,27 @@ void MASTER_IDL_quit::init() {
   _return = false;
 }
 
+bool MASTER_IDL_start::write(yarp::os::ConnectionWriter& connection) {
+  yarp::os::idl::WireWriter writer(connection);
+  if (!writer.writeListHeader(1)) return false;
+  if (!writer.writeTag("start",1,1)) return false;
+  return true;
+}
+
+bool MASTER_IDL_start::read(yarp::os::ConnectionReader& connection) {
+  yarp::os::idl::WireReader reader(connection);
+  if (!reader.readListReturn()) return false;
+  if (!reader.readBool(_return)) {
+    reader.fail();
+    return false;
+  }
+  return true;
+}
+
+void MASTER_IDL_start::init() {
+  _return = false;
+}
+
 bool MASTER_IDL_triggerNextMove::write(yarp::os::ConnectionWriter& connection) {
   yarp::os::idl::WireWriter writer(connection);
   if (!writer.writeListHeader(1)) return false;
@@ -151,6 +180,16 @@ bool MASTER_IDL::quit() {
   helper.init();
   if (!yarp().canWrite()) {
     yError("Missing server method '%s'?","bool MASTER_IDL::quit()");
+  }
+  bool ok = yarp().write(helper,helper);
+  return ok?helper._return:_return;
+}
+bool MASTER_IDL::start() {
+  bool _return = false;
+  MASTER_IDL_start helper;
+  helper.init();
+  if (!yarp().canWrite()) {
+    yError("Missing server method '%s'?","bool MASTER_IDL::start()");
   }
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
@@ -208,6 +247,17 @@ bool MASTER_IDL::read(yarp::os::ConnectionReader& connection) {
       reader.accept();
       return true;
     }
+    if (tag == "start") {
+      bool _return;
+      _return = start();
+      yarp::os::idl::WireWriter writer(reader);
+      if (!writer.isNull()) {
+        if (!writer.writeListHeader(1)) return false;
+        if (!writer.writeBool(_return)) return false;
+      }
+      reader.accept();
+      return true;
+    }
     if (tag == "triggerNextMove") {
       bool _return;
       _return = triggerNextMove();
@@ -256,6 +306,7 @@ std::vector<std::string> MASTER_IDL::help(const std::string& functionName) {
     helpString.push_back("update");
     helpString.push_back("reset");
     helpString.push_back("quit");
+    helpString.push_back("start");
     helpString.push_back("triggerNextMove");
     helpString.push_back("help");
   }
@@ -268,6 +319,9 @@ std::vector<std::string> MASTER_IDL::help(const std::string& functionName) {
     }
     if (functionName=="quit") {
       helpString.push_back("bool quit() ");
+    }
+    if (functionName=="start") {
+      helpString.push_back("bool start() ");
     }
     if (functionName=="triggerNextMove") {
       helpString.push_back("bool triggerNextMove() ");
