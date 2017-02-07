@@ -8,12 +8,14 @@
       <node>localhost</node>
   </module>
 
+
   <module>
         <name>wholeBodyDynamics</name>
         <parameters>--robot icubSim --dummy_ft --autoconnect</parameters>
-        <node>console</node>
+        <node>localhost</node>
         <tag>wbd</tag>
   </module>
+
 
   <module>
       <name>iCub_SIM</name>
