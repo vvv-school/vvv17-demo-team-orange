@@ -1,6 +1,6 @@
 # Copyright: (C) VVV17, Santa Margherita
 #C opyright: (C) Team Orange
-# Authors: Pedro Vicente <pvicente@isr.ist.utl.pt>
+# Authors: Pedro Vicente <pvicente@isr.tecnico.ulisboa.pt>
 # CopyPolicy: Released under the terms of the GNU GPL v2.0.
 
 cmake_minimum_required(VERSION 2.6)
@@ -23,3 +23,4 @@ icubcontrib_set_default_prefix()
 add_subdirectory(master)
 add_subdirectory(pickAndPlace)
 #add_subdirectory(movePlanner)
+add_subdirectory(moveGrounding)

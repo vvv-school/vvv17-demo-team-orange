@@ -1,7 +1,7 @@
 /****************************************************************** 
 **  Copyright: (C) VVV17, Santa Margherita
 **  Copyright: (C) Team Orange
-**  Authors: Pedro Vicente <pvicente@isr.ist.utl.pt>
+**  Authors: Pedro Vicente <pvicente@isr.tecnico.ulisboa.pt>
 **  CopyPolicy: Released under the terms of the GNU GPL v2.0.
 *******************************************************************/
 
@@ -9,6 +9,7 @@
 #define MASTER_H
 
 #include <yarp/os/Bottle.h>
+#include <yarp/sig/Vector.h>
 #include <yarp/os/BufferedPort.h>
 #include <yarp/os/Mutex.h>
 #include <yarp/os/RateThread.h>
@@ -25,15 +26,16 @@
 #include "MASTER_IDL.h"
 
 using namespace yarp::os;
+using namespace yarp::sig;
 using namespace std;
 
 
 class MasterThread : public RateThread {
 public:
-    MasterThread(string Name,int r);
+    MasterThread(string Name,bool whostarts,int r);
     string moduleName;
     
-    Mutex guard;
+    Mutex mutexThread;
     virtual bool threadInit();
     
     //called by start after threadInit, s is true iff the thread started
@@ -44,21 +46,31 @@ public:
     bool interrupt();
     bool close();
     bool running;
+    bool myturn;
+    bool clapReceived;
+    bool sendCommands;    
+    int statemyturn;
+    Bottle ObjectLoc;
+    Vector NextMove;
+    Vector BoardPose;
+    Vector startPose;
     
 
 private:
 
     yarp::os::RpcClient rpcObjReco;
-    yarp::os::RpcClient rpcSpeech;
+    yarp::os::RpcClient rpcClap;
     yarp::os::RpcClient rpcPlanner;
     yarp::os::RpcClient rpcPickPlace;
     yarp::os::RpcClient rpcGameState;
+    yarp::os::RpcClient rpcEmotions;
 
     string rpcObjRecoName;
-    string rpcSpeechName;
+    string rpcClapName;
     string rpcPlannerName;
     string rpcPickPlaceName;
     string rpcGameStateName;
+    string rpcEmotionsName;
     void stateMachine();
     bool openPorts();
 
