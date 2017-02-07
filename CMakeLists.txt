@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 2.6)
 
-set(PROJECTNAME orange-team)
+set(PROJECTNAME orange-team-superbuild)
 project(${PROJECTNAME})
 
 find_package(ICUBcontrib)
