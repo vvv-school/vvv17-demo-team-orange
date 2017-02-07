@@ -9,6 +9,13 @@
   </module>
 
   <module>
+        <name>wholeBodyDynamics</name>
+        <parameters>--robot icubSim --dummy_ft --autoconnect</parameters>
+        <node>console</node>
+        <tag>wbd</tag>
+  </module>
+
+  <module>
       <name>iCub_SIM</name>
       <dependencies>
           <port timeout="20">/yarplogger</port>
