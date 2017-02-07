@@ -40,7 +40,7 @@ protected:
     RpcServer inputPort;
 
     RpcClient biasPort;
-    BufferedPort<Vector> inPort;
+    Port inPort;
     ObjectRetriever object;
 
 
@@ -111,14 +111,20 @@ protected:
             iarm->checkMotionDone(&motion_done); // or force detected
 
             // read force input port
-            Vector *forceData = inPort.read();
-            yInfo()<<"Force data is "<<(*forceData).toString();
-            if(forceData == YARP_NULLPTR){
+            Bottle forceData;
+            if(!inPort.read(forceData)){
                 yError()<<"error reading port";
                 force_detected = true; // to stop the motion
             }
+
+
+
+
             else{
-                if ((*forceData)[2] > force_threshold)
+                double zForce = forceData.get(2).asDouble();
+                yInfo()<<"Force data is "<< zForce;
+
+                if (fabs(zForce) > force_threshold)
                 {
                     force_detected = true;
                     yInfo()<<"Force threshold exceeded";
@@ -421,7 +427,7 @@ public:
         igaze->storeContext(&startup_ctxt_gaze);
 
         inputPort.open("/pickAndPlace/rpc:i");
-        attach(inputPort);
+        //attach(inputPort);
 
         biasPort.open("/wholeBodyDynamics/rpc:i");
 

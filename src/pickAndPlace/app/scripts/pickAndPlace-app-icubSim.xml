@@ -10,7 +10,7 @@
   </dependencies>
 
   <module>
-      <name>project_grasp-it</name>
+      <name>pickAndPlace</name>
       <parameters>--robot icubSim</parameters>
       <environment>YARP_FORWARD_LOG_ENABLE=1</environment>
       <node>localhost</node>
