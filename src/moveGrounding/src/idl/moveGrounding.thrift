@@ -7,6 +7,7 @@ struct Vector {}
 )
 
 service moveGrounding {
+  bool init(1: list<double> boardLocation);
   bool reset();
-  bool computeNextMove(1: list<Vector> objLocation, 2: Vector placeLocation);
+  Vector computeNextMove(1: list<double> objLocation);
 }

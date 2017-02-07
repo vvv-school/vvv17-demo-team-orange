@@ -29,10 +29,10 @@ public:
 
     // Memory interface see Memory.thrift
     virtual bool reset();
-    virtual bool computeNextMove(const std::vector<yarp::sig::Vector> & objLocation, const yarp::sig::Vector& placeLocation);
+    virtual bool init(const std::vector<double> &boardLocation);
+    virtual yarp::sig::Vector computeNextMove(const std::vector<double> &objLocation);
+
 private:
-
-
     yarp::os::RpcServer commandPort;                    // command port
 };
 

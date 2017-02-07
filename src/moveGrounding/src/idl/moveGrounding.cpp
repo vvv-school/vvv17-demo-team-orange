@@ -6,6 +6,15 @@
 
 
 
+class moveGrounding_init : public yarp::os::Portable {
+public:
+  std::vector<double>  boardLocation;
+  bool _return;
+  void init(const std::vector<double> & boardLocation);
+  virtual bool write(yarp::os::ConnectionWriter& connection);
+  virtual bool read(yarp::os::ConnectionReader& connection);
+};
+
 class moveGrounding_reset : public yarp::os::Portable {
 public:
   bool _return;
@@ -16,13 +25,43 @@ public:
 
 class moveGrounding_computeNextMove : public yarp::os::Portable {
 public:
-  std::vector<yarp::sig::Vector>  objLocation;
-  yarp::sig::Vector placeLocation;
-  bool _return;
-  void init(const std::vector<yarp::sig::Vector> & objLocation, const yarp::sig::Vector& placeLocation);
+  std::vector<double>  objLocation;
+  yarp::sig::Vector _return;
+  void init(const std::vector<double> & objLocation);
   virtual bool write(yarp::os::ConnectionWriter& connection);
   virtual bool read(yarp::os::ConnectionReader& connection);
 };
+
+bool moveGrounding_init::write(yarp::os::ConnectionWriter& connection) {
+  yarp::os::idl::WireWriter writer(connection);
+  if (!writer.writeListHeader(2)) return false;
+  if (!writer.writeTag("init",1,1)) return false;
+  {
+    if (!writer.writeListBegin(BOTTLE_TAG_DOUBLE, static_cast<uint32_t>(boardLocation.size()))) return false;
+    std::vector<double> ::iterator _iter0;
+    for (_iter0 = boardLocation.begin(); _iter0 != boardLocation.end(); ++_iter0)
+    {
+      if (!writer.writeDouble((*_iter0))) return false;
+    }
+    if (!writer.writeListEnd()) return false;
+  }
+  return true;
+}
+
+bool moveGrounding_init::read(yarp::os::ConnectionReader& connection) {
+  yarp::os::idl::WireReader reader(connection);
+  if (!reader.readListReturn()) return false;
+  if (!reader.readBool(_return)) {
+    reader.fail();
+    return false;
+  }
+  return true;
+}
+
+void moveGrounding_init::init(const std::vector<double> & boardLocation) {
+  _return = false;
+  this->boardLocation = boardLocation;
+}
 
 bool moveGrounding_reset::write(yarp::os::ConnectionWriter& connection) {
   yarp::os::idl::WireWriter writer(connection);
@@ -47,39 +86,46 @@ void moveGrounding_reset::init() {
 
 bool moveGrounding_computeNextMove::write(yarp::os::ConnectionWriter& connection) {
   yarp::os::idl::WireWriter writer(connection);
-  if (!writer.writeListHeader(3)) return false;
+  if (!writer.writeListHeader(2)) return false;
   if (!writer.writeTag("computeNextMove",1,1)) return false;
   {
-    if (!writer.writeListBegin(BOTTLE_TAG_LIST, static_cast<uint32_t>(objLocation.size()))) return false;
-    std::vector<yarp::sig::Vector> ::iterator _iter0;
-    for (_iter0 = objLocation.begin(); _iter0 != objLocation.end(); ++_iter0)
+    if (!writer.writeListBegin(BOTTLE_TAG_DOUBLE, static_cast<uint32_t>(objLocation.size()))) return false;
+    std::vector<double> ::iterator _iter1;
+    for (_iter1 = objLocation.begin(); _iter1 != objLocation.end(); ++_iter1)
     {
-      if (!writer.writeNested((*_iter0))) return false;
+      if (!writer.writeDouble((*_iter1))) return false;
     }
     if (!writer.writeListEnd()) return false;
   }
-  if (!writer.write(placeLocation)) return false;
   return true;
 }
 
 bool moveGrounding_computeNextMove::read(yarp::os::ConnectionReader& connection) {
   yarp::os::idl::WireReader reader(connection);
   if (!reader.readListReturn()) return false;
-  if (!reader.readBool(_return)) {
+  if (!reader.read(_return)) {
     reader.fail();
     return false;
   }
   return true;
 }
 
-void moveGrounding_computeNextMove::init(const std::vector<yarp::sig::Vector> & objLocation, const yarp::sig::Vector& placeLocation) {
-  _return = false;
+void moveGrounding_computeNextMove::init(const std::vector<double> & objLocation) {
   this->objLocation = objLocation;
-  this->placeLocation = placeLocation;
 }
 
 moveGrounding::moveGrounding() {
   yarp().setOwner(*this);
+}
+bool moveGrounding::init(const std::vector<double> & boardLocation) {
+  bool _return = false;
+  moveGrounding_init helper;
+  helper.init(boardLocation);
+  if (!yarp().canWrite()) {
+    yError("Missing server method '%s'?","bool moveGrounding::init(const std::vector<double> & boardLocation)");
+  }
+  bool ok = yarp().write(helper,helper);
+  return ok?helper._return:_return;
 }
 bool moveGrounding::reset() {
   bool _return = false;
@@ -91,12 +137,12 @@ bool moveGrounding::reset() {
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
 }
-bool moveGrounding::computeNextMove(const std::vector<yarp::sig::Vector> & objLocation, const yarp::sig::Vector& placeLocation) {
-  bool _return = false;
+yarp::sig::Vector moveGrounding::computeNextMove(const std::vector<double> & objLocation) {
+  yarp::sig::Vector _return;
   moveGrounding_computeNextMove helper;
-  helper.init(objLocation,placeLocation);
+  helper.init(objLocation);
   if (!yarp().canWrite()) {
-    yError("Missing server method '%s'?","bool moveGrounding::computeNextMove(const std::vector<yarp::sig::Vector> & objLocation, const yarp::sig::Vector& placeLocation)");
+    yError("Missing server method '%s'?","yarp::sig::Vector moveGrounding::computeNextMove(const std::vector<double> & objLocation)");
   }
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
@@ -111,6 +157,34 @@ bool moveGrounding::read(yarp::os::ConnectionReader& connection) {
   if (direct) tag = reader.readTag();
   while (!reader.isError()) {
     // TODO: use quick lookup, this is just a test
+    if (tag == "init") {
+      std::vector<double>  boardLocation;
+      {
+        boardLocation.clear();
+        uint32_t _size2;
+        yarp::os::idl::WireState _etype5;
+        reader.readListBegin(_etype5, _size2);
+        boardLocation.resize(_size2);
+        uint32_t _i6;
+        for (_i6 = 0; _i6 < _size2; ++_i6)
+        {
+          if (!reader.readDouble(boardLocation[_i6])) {
+            reader.fail();
+            return false;
+          }
+        }
+        reader.readListEnd();
+      }
+      bool _return;
+      _return = init(boardLocation);
+      yarp::os::idl::WireWriter writer(reader);
+      if (!writer.isNull()) {
+        if (!writer.writeListHeader(1)) return false;
+        if (!writer.writeBool(_return)) return false;
+      }
+      reader.accept();
+      return true;
+    }
     if (tag == "reset") {
       bool _return;
       _return = reset();
@@ -123,34 +197,29 @@ bool moveGrounding::read(yarp::os::ConnectionReader& connection) {
       return true;
     }
     if (tag == "computeNextMove") {
-      std::vector<yarp::sig::Vector>  objLocation;
-      yarp::sig::Vector placeLocation;
+      std::vector<double>  objLocation;
       {
         objLocation.clear();
-        uint32_t _size1;
-        yarp::os::idl::WireState _etype4;
-        reader.readListBegin(_etype4, _size1);
-        objLocation.resize(_size1);
-        uint32_t _i5;
-        for (_i5 = 0; _i5 < _size1; ++_i5)
+        uint32_t _size7;
+        yarp::os::idl::WireState _etype10;
+        reader.readListBegin(_etype10, _size7);
+        objLocation.resize(_size7);
+        uint32_t _i11;
+        for (_i11 = 0; _i11 < _size7; ++_i11)
         {
-          if (!reader.readNested(objLocation[_i5])) {
+          if (!reader.readDouble(objLocation[_i11])) {
             reader.fail();
             return false;
           }
         }
         reader.readListEnd();
       }
-      if (!reader.read(placeLocation)) {
-        reader.fail();
-        return false;
-      }
-      bool _return;
-      _return = computeNextMove(objLocation,placeLocation);
+      yarp::sig::Vector _return;
+      _return = computeNextMove(objLocation);
       yarp::os::idl::WireWriter writer(reader);
       if (!writer.isNull()) {
         if (!writer.writeListHeader(1)) return false;
-        if (!writer.writeBool(_return)) return false;
+        if (!writer.write(_return)) return false;
       }
       reader.accept();
       return true;
@@ -189,16 +258,20 @@ std::vector<std::string> moveGrounding::help(const std::string& functionName) {
   std::vector<std::string> helpString;
   if(showAll) {
     helpString.push_back("*** Available commands:");
+    helpString.push_back("init");
     helpString.push_back("reset");
     helpString.push_back("computeNextMove");
     helpString.push_back("help");
   }
   else {
+    if (functionName=="init") {
+      helpString.push_back("bool init(const std::vector<double> & boardLocation) ");
+    }
     if (functionName=="reset") {
       helpString.push_back("bool reset() ");
     }
     if (functionName=="computeNextMove") {
-      helpString.push_back("bool computeNextMove(const std::vector<yarp::sig::Vector> & objLocation, const yarp::sig::Vector& placeLocation) ");
+      helpString.push_back("yarp::sig::Vector computeNextMove(const std::vector<double> & objLocation) ");
     }
     if (functionName=="help") {
       helpString.push_back("std::vector<std::string> help(const std::string& functionName=\"--all\")");

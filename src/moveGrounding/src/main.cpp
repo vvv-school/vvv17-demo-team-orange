@@ -20,9 +20,6 @@ int main(int argc, char * argv[])
     moveGroundingModule module;
     ResourceFinder rf;
     rf.configure(argc, argv);
-    rf.setDefaultContext("tutorial_yarp-idl");
-    //rf.setDefaultConfigFile("tutorial_yarp-idl.ini");
-    // rf.setVerbose(true);
 
     module.runModule(rf);
 

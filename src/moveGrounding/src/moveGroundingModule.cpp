@@ -60,7 +60,14 @@ bool moveGroundingModule::reset(){
     return true;
 };
 
-bool moveGroundingModule::computeNextMove(const std::vector<yarp::sig::Vector> &objLocation,
-                                          const yarp::sig::Vector &placeLocation) {
+bool moveGroundingModule::init(const std::vector<double> &boardLocation){
     return true;
-}
+};
+
+yarp::sig::Vector moveGroundingModule::computeNextMove(const std::vector<double> &objLocation){
+    yarp::sig::Vector placeLocation(objLocation.size());
+    for (int i = 0; i < objLocation.size(); ++i) {
+        placeLocation[i] = objLocation[i];
+    }
+    return placeLocation;
+};

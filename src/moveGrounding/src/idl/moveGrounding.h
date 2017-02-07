@@ -14,8 +14,9 @@ class moveGrounding;
 class moveGrounding : public yarp::os::Wire {
 public:
   moveGrounding();
+  virtual bool init(const std::vector<double> & boardLocation);
   virtual bool reset();
-  virtual bool computeNextMove(const std::vector<yarp::sig::Vector> & objLocation, const yarp::sig::Vector& placeLocation);
+  virtual yarp::sig::Vector computeNextMove(const std::vector<double> & objLocation);
   virtual bool read(yarp::os::ConnectionReader& connection);
   virtual std::vector<std::string> help(const std::string& functionName="--all");
 };
