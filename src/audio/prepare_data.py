@@ -95,10 +95,11 @@ def spectrogram_from_file_librosa( filename,step  = 10, window = 20, max_freq = 
         #                                    n_fft = fft_length, fmax = max_freq) ).astype(np.float32)
         S = melspectrogram(audio, sr = sample_rate,hop_length=hop_length,
                                             n_fft = fft_length, fmax = max_freq, n_mels = 40)
+        rms = librosa.feature.rmse(S=S)
         mfcc = librosa.feature.mfcc(n_mfcc = 13, S=librosa.logamplitude(S))
         mfcc_delta = librosa.feature.delta(mfcc)
 
-        total_mfcc = np.vstack( (mfcc, mfcc_delta) )
+        total_mfcc = np.vstack( (rms, mfcc, mfcc_delta) )
         #total_mfcc = mfcc
         return np.transpose(total_mfcc ).astype(np.float32)
 
@@ -117,12 +118,13 @@ def create_temporal_dataset( directory ):
             annotations_by_wav_file[ wav_file ].append( ann )
 
     X, Y = [], []
-    STEP_SIZE_MS = 15
+    STEP_SIZE_MS = 10
+    WINDOW_SIZE = 10
     for audio_file, lst_annotations in annotations_by_wav_file.items():
         sequence_X = []
         sequence_Y = []
         spectrogram = spectrogram_from_file_librosa(audio_file, step=STEP_SIZE_MS,
-                                                    window = 25, max_freq = 8000)
+                                                    window = WINDOW_SIZE, max_freq = 8000)
 
 
         initial_timing = datetime.datetime( hour = 0, minute = 0, second  = 0,
@@ -137,7 +139,7 @@ def create_temporal_dataset( directory ):
             timing = data_struct["timing"]
 
             sequence_X.append(mfcc)
-            if check_if_timing_in_annotations(timing, lst_annotations, threshold = 15):
+            if check_if_timing_in_annotations(timing, lst_annotations, threshold = WINDOW_SIZE):
                 sequence_Y.append(1)
             else:
                 sequence_Y.append(0)
@@ -160,13 +162,13 @@ def get_sequences(lst_all_sequences, lst_all_sequence_labels, sequence_length, s
 
             if len(subset_X) < sequence_length:
                 continue
-            if np.sum(subset_Y) == 0:
-                label = 0
-            else:
+            if np.sum(subset_Y) > 1:
                 label = 1
+            else:
+                label = 0
 
             if label == 0:
-                if np.random.random() > 0.3:
+                if np.random.random() > 0.7:
                     continue
             squashed_X = compose_vector_of_functionals( subset_X )
             res_X.append(  np.expand_dims( squashed_X, axis = 0 )  )

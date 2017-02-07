@@ -28,6 +28,29 @@ if not yarp.NetworkBase_connect("/grabber/audio", p.getName()):
 whole_rec = []
 SAMPLE_RATE = 48000
 RES_WAV_FILE = "/home/egor/test_numpy.wav"
+USE_NN_DETECTOR = True
+
+def nn_detector( signal, sample_rate ):
+    return True
+
+def rms_detector( signal, sample_rate, threshold = 4.0 ):
+    averaged_signal = np.mean(signal, axis=0)
+    S, phase = librosa.magphase(librosa.stft(averaged_signal))
+
+    rms = librosa.feature.rmse(S=S)
+    rms = rms.ravel()
+    max_rms = rms.max()
+    print("Max RMS:{}".format(max_rms))
+
+    # for rm in rms:
+    #     rms_value = float(rm)
+    #     bottle = dbg.prepare()
+    #     bottle.clear()
+    #     bottle.addDouble(rms_value)
+    #     dbg.write()
+    if max_rms > threshold:
+        return True
+    return False
 
 while True:
     try:
@@ -46,21 +69,13 @@ while True:
                 res[ ch_idx, sample_id] = dbl_value
 
         #simple rmse click
-        averaged_signal = np.mean( res, axis = 0 )
-        S, phase = librosa.magphase(librosa.stft(averaged_signal))
+        if USE_NN_DETECTOR:
+            clap = nn_detector( res, SAMPLE_RATE )
+        else:
+            clap = rms_detector( res, SAMPLE_RATE, threshold = 4.0 )
 
-        rms = librosa.feature.rmse(S=S)
-        rms = rms.ravel()
-        max_rms = rms.max()
-        print("Max RMS:{}".format( max_rms ))
-        for rm in rms:
-            rms_value = float(rm)
-            bottle = dbg.prepare()
-            bottle.clear()
-            bottle.addDouble(rms_value)
-            dbg.write()
 
-        if max_rms > 3.0:
+        if clap > 3.0:
             print("There was a clap")
             clap_bottle = claps_port.prepare()
             clap_bottle.clear()
