@@ -1,6 +1,9 @@
 from __future__ import print_function
 import os
 import sys
+
+from librosa.feature import rmse
+
 sys.path.append("/home/egor/robot-install/lib/python2.7/dist-packages")
 import yarp
 import numpy as np
@@ -12,6 +15,11 @@ yarp.Network.init()
 p = yarp.BufferedPortSound()
 p.open("/audio/in")
 
+dbg = yarp.BufferedPortBottle()
+dbg.open("/audio/out")
+
+claps_port = yarp.BufferedPortBottle()
+claps_port.open("/clap/out")
 
 if not yarp.NetworkBase_connect("/grabber/audio", p.getName()):
     print("cannot connect to audio port")
@@ -36,11 +44,38 @@ while True:
                 sample_value = np.short( sample_value )
                 dbl_value = sample_value / 65535.0
                 res[ ch_idx, sample_id] = dbl_value
+
+        #simple rmse click
+        averaged_signal = np.mean( res, axis = 0 )
+        S, phase = librosa.magphase(librosa.stft(averaged_signal))
+
+        rms = librosa.feature.rmse(S=S)
+        rms = rms.ravel()
+        max_rms = rms.max()
+        print("Max RMS:{}".format( max_rms ))
+        for rm in rms:
+            rms_value = float(rm)
+            bottle = dbg.prepare()
+            bottle.clear()
+            bottle.addDouble(rms_value)
+            dbg.write()
+
+        if max_rms > 3.0:
+            print("There was a clap")
+            clap_bottle = claps_port.prepare()
+            clap_bottle.clear()
+            clap_bottle.addInt(1)
+            claps_port.write()
+
+
         if len(whole_rec) > 0:
             whole_rec = np.hstack( (whole_rec, res) )
         else:
             whole_rec = res
-        print("1 sec is gone:{}".format(whole_rec.shape[1]))
+        #print("1 sec is gone:{}".format(whole_rec.shape[1]))
+        #truncate
+        #if whole_rec.shape[1] > SAMPLE_RATE * 2:
+        #    whole_rec =
 
     except KeyboardInterrupt:
         librosa.output.write_wav(RES_WAV_FILE, whole_rec, SAMPLE_RATE)
