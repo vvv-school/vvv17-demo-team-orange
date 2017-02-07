@@ -1,5 +1,6 @@
 from __future__ import print_function
 import os
+os.environ["OMP_NUM_THREADS"] = "4"
 import sys
 
 import joblib
@@ -26,7 +27,8 @@ dbg.open("/audio/out")
 claps_port = yarp.BufferedPortBottle()
 claps_port.open("/clap/out")
 
-if not yarp.NetworkBase_connect("/grabber/audio", p.getName()):
+PORT = "/icub/audio"
+if not yarp.NetworkBase_connect(PORT, p.getName()):
     print("cannot connect to audio port")
     sys.exit(0)
 
@@ -54,15 +56,16 @@ def nn_detector( signal, sample_rate, frames_to_classify = 4 ):
     pred = model.predict( input )
     pred = pred.ravel()
     #print(pred)
-    pred = [1 if p > 0.65 else 0 for p in pred]
+    pred = [1 if p > 0.75 else 0 for p in pred]
     total_time = time.time() - start_time
     print("Prediction took:{}".format( total_time ))
     print(pred)
-    if sum(pred) > 4:
+    if sum(pred) > 5:
         return False
-    else:
+    elif sum(pred) > 1:
         print("*** Detected clap ***")
         return True
+    return False
 
 def rms_detector( signal, sample_rate, threshold = 4.0 ):
     averaged_signal = np.mean(signal, axis=0)
