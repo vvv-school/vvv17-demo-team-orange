@@ -1,6 +1,6 @@
 <application>
 
-  <name>Assignment on Grasp It App icub</name>
+  <name>pickAndPlace App icub</name>
 
   <dependencies>
       <port>/yarplogger</port>
