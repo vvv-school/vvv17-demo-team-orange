@@ -14,33 +14,33 @@
     <parameters>--parameter1 value</parameters>
     <parameters>--parameter2 value</paremeters>
     <parameters>--parameter3 value</paremeters>
-    <node>console</node>
+    <node>localhost</node>
 </module>
 
 <module>
     <name>objReco</name>
     <parameters>--parameter1</parameters>
-    <node>console</node>
+    <node>localhost</node>
 </module>
 
 <module>
     <name>pickAndPlace</name>
-    <node>console</node>
+    <node>localhost</node>
 </module>
 
 <module>
     <name>clapDuo</name>
-    <node>console</node>
+    <node>localhost</node>
 </module>
 
 <module>
     <name>moveGrounding</name>
-    <node>console</node>
+    <node>localhost</node>
 </module>
 
 <module>
     <name>movePlanner</name>
-    <node>console</node>
+    <node>localhost</node>
 </module>
 
 <!-- Connections of Modules -->
