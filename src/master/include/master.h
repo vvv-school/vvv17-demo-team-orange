@@ -28,15 +28,12 @@ using namespace yarp::os;
 using namespace std;
 
 
-//** IF we need a thread...
-
-/*class Thread_read : public RateThread {
+class MasterThread : public RateThread {
 public:
-    Thread_read(BufferedPort<Bottle> * broad_port,RpcClient * rpcClient,int r);
-    Bottle _data,_ids;
+    MasterThread(string Name,int r);
+    string moduleName;
+    
     Mutex guard;
-    Mutex guard_runit;
-    bool _runit;
     virtual bool threadInit();
     
     //called by start after threadInit, s is true iff the thread started
@@ -44,34 +41,44 @@ public:
     virtual void afterStart(bool s);
     virtual void threadRelease();
     virtual void run();
-
-private:
-
-
-};
-*/
-class MasterModule: public RFModule, public MASTER_IDL {
-    string moduleName;
+    bool interrupt();
+    bool close();
+    bool running;
     
+
 private:
-    yarp::os::RpcServer rpcPort;
+
     yarp::os::RpcClient rpcObjReco;
     yarp::os::RpcClient rpcSpeech;
     yarp::os::RpcClient rpcPlanner;
     yarp::os::RpcClient rpcPickPlace;
     yarp::os::RpcClient rpcGameState;
 
-    string rpcPortName;
     string rpcObjRecoName;
     string rpcSpeechName;
     string rpcPlannerName;
     string rpcPickPlaceName;
     string rpcGameStateName;
+    void stateMachine();
+    bool openPorts();
+
+};
+
+class MasterModule: public RFModule, public MASTER_IDL {
+    string moduleName;
+    
+private:
+    yarp::os::RpcServer rpcPort;
+
+    string rpcPortName;
 
     bool closing;
     bool starting;
+    double threadPeriod;
+
+    //
 public:
-    
+    MasterThread *comunThread;
     double getPeriod();
     bool configure(yarp::os::ResourceFinder &rf);
     bool updateModule();
@@ -86,4 +93,4 @@ public:
     bool reset();
     bool triggerNextMove();
 };
-#endif // MASTER_HrpcSpeech
+#endif // MASTER_H

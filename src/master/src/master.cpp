@@ -35,46 +35,27 @@ bool MasterModule::configure(yarp::os::ResourceFinder &rf) {
     }
     attach(rpcPort);
 
-    rpcObjRecoName="/objReco/";
-    if (!rpcObjReco.open("/"+moduleName+rpcObjRecoName+"rpc:o"))
-    {
-        yError("%s : Unable to open port %s\n", getName().c_str(), rpcObjRecoName.c_str());
-        return false;
-    }
-    rpcSpeechName = "/speech/";
-    if (!rpcSpeech.open("/"+moduleName+rpcSpeechName+"rpc:o"))
-    {
-        yError("%s : Unable to open port %s\n", getName().c_str(), rpcSpeechName.c_str());
-        return false;
-    }
-    rpcPlannerName = "/planner/";
-    if (!rpcPlanner.open("/"+moduleName+rpcPlannerName+"rpc:o"))
-    {
-        yError("%s : Unable to open port %s\n", getName().c_str(), rpcPlannerName.c_str());
-        return false;
-    }
-    rpcPickPlaceName = "/pick/";
-    if (!rpcPickPlace.open("/"+moduleName+rpcPickPlaceName+"rpc:o"))
-    {
-        yError("%s : Unable to open port %s\n", getName().c_str(), rpcPickPlaceName.c_str());
-        return false;
-    }
-    rpcGameStateName = "/gameState/";
-    if (!rpcGameState.open("/"+moduleName+rpcGameStateName+"rpc:o"))
-    {
-        yError("%s : Unable to open port %s\n", getName().c_str(), rpcGameStateName.c_str());
+    threadPeriod = rf.check("threadPeriod", Value(0.033), "Master thread period key value(double) in seconds ").asDouble();
+
+    // launch thread    
+    comunThread = new MasterThread(moduleName,
+                                threadPeriod);
+    
+    /* Start masterthread */
+    if (!comunThread->start()) {
+        delete comunThread;
         return false;
     }
 
     // Everything ok.
-    yInfo() << "Everything ok";
+    yInfo() << "MasterModule: " << "Everything ok";
     return true;
 
 }
 
 /*IDL Functions*/
 bool MasterModule::quit() {
-    yInfo() << "Received Quit command in RPC";
+    yInfo() << "MasterModule: " << "Received Quit command in RPC";
     closing = true;
     return true;
 }
@@ -85,7 +66,7 @@ bool MasterModule::update(){
 }
 bool MasterModule::start(){
     starting = true;
-    yInfo() << "Received Starting comming... Let's PLAY!!!";
+    yInfo() << "MasterModule: " << "Received Starting comming... Let's PLAY!!!";
     return true;
 }
 bool MasterModule::attach(RpcServer &source)
@@ -95,19 +76,130 @@ bool MasterModule::attach(RpcServer &source)
 }
 
 bool MasterModule::close() {
-    yInfo() << "Calling close function";
+    yInfo() << "MasterModule: " << "Calling close function";
     rpcPort.close();
-    rpcObjReco.close();
-    rpcSpeech.close();
-    rpcPlanner.close();
-    rpcPickPlace.close();
-    rpcGameState.close();
+    comunThread->close();
+    comunThread->stop();
+    delete comunThread;
     return true;
 }
 
 bool MasterModule::interruptModule() {
-    yInfo() << "Calling interrupt Module function";
+    yInfo() <<"MasterModule: " << "Calling interrupt Module function";
     rpcPort.interrupt();
+    comunThread->interrupt();
+    yInfo() <<"MasterModule: " << "DONE?!";
+    return true;
+}
+bool MasterModule::updateModule() {
+    // If nothing is connected to the master
+    //yInfo() << "running";
+
+    return !closing;
+}
+
+// reset the game
+bool MasterModule::reset() {
+    yInfo() << "MasterModule: " << "Received reset command in RPC";
+    return true;
+}
+bool MasterModule::triggerNextMove() {
+    yInfo() << "MasterModule: " << "Received triggerNextMove command in RPC";
+    return true;
+}
+
+
+
+//*************************************************************************************************************************************//
+//************                                                   MASTER THREAD                                                 ********//
+//*************************************************************************************************************************************//
+ 
+MasterThread::MasterThread(string Name,int r) : RateThread(r) {
+    moduleName = Name;
+};
+
+void MasterThread::run(){
+    // Game State machine...
+    if(running) {
+        if(rpcObjReco.getOutputCount()<=0) {// || rpcSpeech.getOutputCount()<=0 || rpcPlanner.getOutputCount()<=0 || rpcPickPlace.getOutputCount()<=0 || rpcGameState.getOutputCount()<=0) {
+            yInfo() << "MasterThread: Waiting for connections...";        
+            Time::delay(0.4);  
+            return;      
+        }
+        yInfo() << "MasterThread: Comunication Started";
+        Bottle cmd,reply;
+        cmd.addDouble(1);
+        rpcObjReco.write(cmd,reply);
+        
+
+
+        stateMachine();
+    }
+}
+
+void MasterThread::stateMachine() {
+
+}
+bool MasterThread::threadInit(){
+
+    if(!openPorts())
+    {
+        yError("problem opening ports");
+        return false;
+    }
+    running = true;
+    return true;
+}
+
+bool MasterThread::openPorts()
+{
+    bool ret = true;
+   // Open communications ports
+
+    rpcObjRecoName="/objReco/";
+    if (!rpcObjReco.open("/"+moduleName+rpcObjRecoName+"rpc:o"))
+    {
+        yError("%s : Unable to open port %s\n", moduleName.c_str(), rpcObjRecoName.c_str());
+        return false;
+    }
+    rpcSpeechName = "/speech/";
+    if (!rpcSpeech.open("/"+moduleName+rpcSpeechName+"rpc:o"))
+    {
+        yError("%s : Unable to open port %s\n", moduleName.c_str(), rpcSpeechName.c_str());
+        return false;
+    }
+    rpcPlannerName = "/planner/";
+    if (!rpcPlanner.open("/"+moduleName+rpcPlannerName+"rpc:o"))
+    {
+        yError("%s : Unable to open port %s\n", moduleName.c_str(), rpcPlannerName.c_str());
+        return false;
+    }
+    rpcPickPlaceName = "/pick/";
+    if (!rpcPickPlace.open("/"+moduleName+rpcPickPlaceName+"rpc:o"))
+    {
+        yError("%s : Unable to open port %s\n", moduleName.c_str(), rpcPickPlaceName.c_str());
+        return false;
+    }
+    rpcGameStateName = "/gameState/";
+    if (!rpcGameState.open("/"+moduleName+rpcGameStateName+"rpc:o"))
+    {
+        yError("%s : Unable to open port %s\n", moduleName.c_str(), rpcGameStateName.c_str());
+        return false;
+    }
+
+    return true;
+}
+
+void MasterThread::afterStart(bool s){
+    if (s) {
+        yInfo() << "Master Thread started =D";
+    }
+    else
+        yError() << "Reading Thread did not start";
+}
+bool MasterThread::interrupt(){
+    yInfo()<< "MasterThread: " << "Interrupt ports";
+    running=false;
     rpcObjReco.interrupt();
     rpcSpeech.interrupt();
     rpcPlanner.interrupt();
@@ -115,24 +207,20 @@ bool MasterModule::interruptModule() {
     rpcGameState.interrupt();
     return true;
 }
-bool MasterModule::updateModule() {
-    // If nothing is connected to the master
-    //yInfo() << "running";
-    if(!starting || rpcObjReco.getOutputCount()<=0 || rpcSpeech.getOutputCount()<=0 || rpcPlanner.getOutputCount()<=0 || rpcPickPlace.getOutputCount()<=0 || rpcGameState.getOutputCount()<=0) {
-        yInfo() << "Waiting for connections...";        
-        Time::delay(0.4);        
-        return !closing;
-    }
-    yInfo() << "Comunication Started";
-    return !closing;
+bool MasterThread::close() {
+    
+    yInfo () << "MasterThread: " << "closing ports";
+    running=false;
+    rpcObjReco.close();
+    rpcSpeech.close();
+    rpcPlanner.close();
+    rpcPickPlace.close();
+    rpcGameState.close();
+    return true;
+
+}
+void MasterThread::threadRelease() {
+    yInfo() << "I my God they kill Kenny - the Master Thread";
+        //getchar();
 }
 
-// reset the game
-bool MasterModule::reset() {
-    yInfo() << "Received reset command in RPC";
-    return true;
-}
-bool MasterModule::triggerNextMove() {
-    yInfo() << "Received triggerNextMove command in RPC";
-    return true;
-}
