@@ -74,7 +74,10 @@ def check_if_timing_in_annotations( timing, annotations, threshold = 15 ):
             return True
     return False
 
-def get_spectrogram( audio, sample_rate, step = 10, window = 20, max_freq = None ):
+def get_spectrogram( audio, sample_rate, step = 10, window = 20,  max_freq = None, min_freq = 700 ):
+    NUM_MFCC = 15
+    N_MELS = 40
+
     if audio.ndim >= 2:
         audio = np.mean(audio, axis = 0)
     hop_length = int(0.001 * step * sample_rate)
@@ -83,9 +86,9 @@ def get_spectrogram( audio, sample_rate, step = 10, window = 20, max_freq = None
     # return np.transpose( melspectrogram(audio, sr = sample_rate,hop_length=hop_length,
     #                                    n_fft = fft_length, fmax = max_freq) ).astype(np.float32)
     S = melspectrogram(audio, sr=sample_rate, hop_length=hop_length,
-                       n_fft=fft_length,fmin = 1000, fmax=max_freq, n_mels=40)
+                       n_fft=fft_length,fmin = min_freq, fmax=max_freq, n_mels = N_MELS)
     rms = librosa.feature.rmse(S=S)
-    mfcc = librosa.feature.mfcc(n_mfcc=13, S=librosa.logamplitude(S))
+    mfcc = librosa.feature.mfcc(n_mfcc=NUM_MFCC, S=librosa.logamplitude(S))
     mfcc_delta = librosa.feature.delta(mfcc)
     mfcc_delta_delta = librosa.feature.delta(mfcc_delta)
 
@@ -93,7 +96,7 @@ def get_spectrogram( audio, sample_rate, step = 10, window = 20, max_freq = None
     # total_mfcc = mfcc
     return np.transpose(total_mfcc).astype(np.float32)
 
-def spectrogram_from_file_librosa( filename,step  = 10, window = 20, max_freq = None ):
+def spectrogram_from_file_librosa( filename,step  = 10, window = 20,min_freq = 700 ,max_freq = None ):
     with soundfile.SoundFile(filename) as sound_file:
         audio = sound_file.read(dtype='float32')
         sample_rate = sound_file.samplerate
@@ -106,21 +109,8 @@ def spectrogram_from_file_librosa( filename,step  = 10, window = 20, max_freq = 
                              " sample rate")
         if step > window:
             raise ValueError("step size must not be greater than window size")
-        # hop_length = int(0.001 * step * sample_rate)
-        # fft_length = int(0.001 * window * sample_rate)
-        #
-        # #return np.transpose( melspectrogram(audio, sr = sample_rate,hop_length=hop_length,
-        # #                                    n_fft = fft_length, fmax = max_freq) ).astype(np.float32)
-        # S = melspectrogram(audio, sr = sample_rate,hop_length=hop_length,
-        #                                     n_fft = fft_length, fmax = max_freq, n_mels = 40)
-        # rms = librosa.feature.rmse(S=S)
-        # mfcc = librosa.feature.mfcc(n_mfcc = 13, S=librosa.logamplitude(S))
-        # mfcc_delta = librosa.feature.delta(mfcc)
-        #
-        # total_mfcc = np.vstack( (rms, mfcc, mfcc_delta) )
-        # #total_mfcc = mfcc
-        # return np.transpose(total_mfcc ).astype(np.float32)
-        return get_spectrogram( audio, sample_rate, step = step, window = window, max_freq = max_freq )
+        return get_spectrogram( audio, sample_rate, step = step,
+                                window = window, min_freq= min_freq, max_freq = max_freq )
 
 
 def create_temporal_dataset( directory ):
@@ -138,12 +128,12 @@ def create_temporal_dataset( directory ):
         print("Found {} annotations in file {}".format( len( annotations_by_wav_file[ wav_file ]), wav_file  ))
 
     X, Y = [], []
-    STEP_SIZE_MS = 10
-    WINDOW_SIZE = 10
+    STEP_SIZE_MS = 15
+    WINDOW_SIZE = 15
     for audio_file, lst_annotations in annotations_by_wav_file.items():
         sequence_X = []
         sequence_Y = []
-        spectrogram = spectrogram_from_file_librosa(audio_file, step=STEP_SIZE_MS,
+        spectrogram = spectrogram_from_file_librosa(audio_file, step=STEP_SIZE_MS, min_freq = 700,
                                                     window = WINDOW_SIZE, max_freq = 8000)
 
 
@@ -198,14 +188,14 @@ def get_sequences(lst_all_sequences, lst_all_sequence_labels, max_seq_length):
         for group in non_clap_group:
             group_seq = [seq_X[idx] for idx in group ]
             for non_clap_group in get_consequtive_sequences( group_seq, max_seq_length ):
-                if len(non_clap_group) < 5 or np.random.random()>0.8:
+                if len(non_clap_group) < 10 or np.random.random() > 0.8:
                     continue
                 squashed_X = compose_vector_of_functionals(non_clap_group)
                 res_X.append(np.expand_dims(squashed_X, axis=0))
                 res_Y.append(0)
 
         for group in clap_group:
-            if(len(group)) < 10:
+            if(len(group)) < 6:
                 continue
             subset_X = [seq_X[ group_idx ] for group_idx in group ]
 
@@ -253,6 +243,6 @@ if __name__ == "__main__":
     #print( load_annotations( "./data/file_2.txt" ) )
     X, Y = create_temporal_dataset( "./data" )
 
-    X_seq, Y_seq = get_sequences( X, Y, sequence_length = 3, sequence_hop = 3 )
+    X_seq, Y_seq = get_sequences( X, Y, max_seq_length = 20 )
     print(X_seq.shape)
     print(Y_seq.shape)

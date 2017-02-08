@@ -21,13 +21,19 @@ yarp.Network.init()
 p = yarp.BufferedPortSound()
 p.open("/audio/in")
 
-dbg = yarp.BufferedPortBottle()
-dbg.open("/audio/out")
-
-claps_port = yarp.BufferedPortBottle()
-claps_port.open("/clap/out")
-
+DEBUG = True
 ICUB_PORT = "/icub/audio"
+RPC_CLAP_NAME = "/master/rpc:i"
+RPC_LOCAL_CLIENT_NAME = "/clapDuo/master/rpc:o"
+rpc_port =  yarp.RpcClient()
+
+
+if not rpc_port.open(RPC_CLAP_NAME) and not DEBUG:
+    print("Could not connect to RPC client")
+    sys.exit(-1)
+yarp.NetworkBase_connect(rpc_port.getName(), RPC_LOCAL_CLIENT_NAME, "tcp")
+
+
 LOCAL_PORT = "/grabber/audio"
 PORT = ICUB_PORT#LOCAL_PORT
 
@@ -38,19 +44,20 @@ if not yarp.NetworkBase_connect(PORT, p.getName()):
 whole_rec = []
 SAMPLE_RATE = 48000
 RES_WAV_FILE = "/home/egor/test_numpy.wav"
-USE_NN_DETECTOR = False
+USE_NN_DETECTOR = True
 
 if USE_NN_DETECTOR:
-    model = get_model( num_features= 216 )
+    print("Use nn model")
+    model = get_model( num_features= 248 )
     model.load_weights( "./models/rnn_model.h5" )
     train_mean, train_std = joblib.load( "./cache/train_mean_std.dat" )
-    print("Loaded data")
 else:
+    print("use logreg model")
     model = joblib.load( "./cache/logistic.dat" )
 
-def logistic_detector( signal, sample_rate, frames_to_classify = 10 ):
+def logistic_detector( signal, sample_rate, frames_to_classify = 15 ):
     start_time = time.time()
-    features = get_spectrogram(signal, sample_rate, window=10, step=10, max_freq=8000)
+    features = get_spectrogram(signal, sample_rate, window=15, step=15,min_freq = 700, max_freq=8000)
     input = []
     for i in range(0, features.shape[0], frames_to_classify):
         subset = features[i:i + frames_to_classify]
@@ -58,8 +65,12 @@ def logistic_detector( signal, sample_rate, frames_to_classify = 10 ):
             continue
         input.append(np.expand_dims(compose_vector_of_functionals(subset), axis=0))
     input = np.vstack(input)
+
+    #input = (input - train_mean) / (train_std + 1e-8)
+
     #predictions = model.predict( input )
     prediction_proba = model.predict_proba( input )
+    print(prediction_proba)
     predictions = [1 if p[1] > 0.75 else 0 for p in prediction_proba ]
     total_time = time.time() - start_time
     #print("Prediction took:{}".format(total_time))
@@ -70,27 +81,32 @@ def logistic_detector( signal, sample_rate, frames_to_classify = 10 ):
     return False
 
 
-def nn_detector( signal, sample_rate, frames_to_classify = 4 ):
+def nn_detector( signal, sample_rate, frames_to_classify = 15 ):
     start_time = time.time()
-    features = get_spectrogram( signal, sample_rate, window = 10, step = 10, max_freq = 8000 )
+    features = get_spectrogram( signal, sample_rate, window = 15, step = 15,min_freq = 700, max_freq = 8000 )
     input = []
-    for i in range(0, features.shape[0], frames_to_classify):
+    i = 0
+    while i < features.shape[0]:
         subset = features[i:i + frames_to_classify]
         if len(subset) < frames_to_classify:
+            i += frames_to_classify
             continue
         input.append( np.expand_dims(compose_vector_of_functionals(subset), axis = 0) )
+        i += frames_to_classify//2
+
     input = np.vstack( input )
     input = (input - train_mean) / (train_std + 1e-8)
     pred = model.predict( input )
     pred = pred.ravel()
-    #print(pred)
-    pred = [1 if p > 0.75 else 0 for p in pred]
+
+    pred = [1 if p > 0.5 else 0 for p in pred]
+    print(pred)
     total_time = time.time() - start_time
-    #print("Prediction took:{}".format( total_time ))
+    print("Prediction took:{}".format( total_time ))
     #print(pred)
 
     if sum(pred) > 0:
-        #print("*** Detected clap ***")
+        print("*** Detected clap by NN ***")
         return True
     return False
 
@@ -101,7 +117,7 @@ def rms_detector( signal, sample_rate, threshold = 6.0 ):
     rms = librosa.feature.rmse(S=S)
     rms = rms.ravel()
     max_rms = rms.max()
-    #print("Max RMS:{}".format(max_rms))
+    print("Max RMS:{}".format(max_rms))
 
     # for rm in rms:
     #     rms_value = float(rm)
@@ -133,7 +149,9 @@ try:
 
         #simple rmse click
         if USE_NN_DETECTOR:
-            clap = nn_detector( res, SAMPLE_RATE )
+            clap_nn = nn_detector( res, SAMPLE_RATE, frames_to_classify = 15 )
+            clap_by_rms = rms_detector(res, SAMPLE_RATE, threshold=8.0)
+            clap = clap_by_rms & clap_nn
         else:
             clap_logistic = logistic_detector( res, SAMPLE_RATE, frames_to_classify = 10 )
             clap_by_rms = rms_detector( res, SAMPLE_RATE, threshold = 10.0 )
@@ -142,10 +160,14 @@ try:
 
         if clap:
             print(">>>>&&&& There was a clap")
-            clap_bottle = claps_port.prepare()
-            clap_bottle.clear()
-            clap_bottle.addInt(1)
-            claps_port.write()
+            if not DEBUG:
+                bottle = yarp.Bottle()
+                result = yarp.Bottle()
+                print("Sending clap message")
+                bottle.clear()
+                bottle.addString("triggerNextMove")
+                rpc_port.write( bottle, result )
+                print("Got the result from RPC server")
 
 
         if len(whole_rec) > 0:
@@ -158,16 +180,15 @@ try:
         #    whole_rec =
 
 except KeyboardInterrupt:
-    librosa.output.write_wav(RES_WAV_FILE, whole_rec, SAMPLE_RATE)
+    librosa.output.write_wav(RES_WAV_FILE + str(time.time()) + ".wav", whole_rec, SAMPLE_RATE)
     print("Written file")
 except Exception,e:
     print(e)
 finally:
     print("grace close")
     p.close()
+    rpc_port.close()
     yarp.Network.fini()
-    dbg.close()
-    claps_port.close()
     sys.exit()
 
 
