@@ -69,47 +69,17 @@ bool ObjectRetriever::calibrate(Vector &location,
 }
 
 /***************************************************/
-bool ObjectRetriever::getLocation(Vector &location,
-                                  const string &hand)
+bool ObjectRetriever::getLocation(Vector &location, const string &objName, const string &hand)
 {
     if (portLocation.getOutputCount()>0)
     {
         Bottle cmd,reply;
-        if (simulation)
-        {
-            cmd.addString("world");
-            cmd.addString("get");
-            cmd.addString("ball");
-            if (portLocation.write(cmd,reply))
-            {
-                if (reply.size()>=3)
-                {
-                    location.resize(3);
-                    location[0]=reply.get(0).asDouble();
-                    location[1]=reply.get(1).asDouble();
-                    location[2]=reply.get(2).asDouble();
-
-                    // compute ball position in robot's root frame
-                    Matrix T=zeros(4,4);
-                    T(0,1)=-1.0;
-                    T(1,2)=1.0;  T(1,3)=0.5976;
-                    T(2,0)=-1.0; T(2,3)=-0.026;
-                    T(3,3)=1.0;
-                    location.push_back(1.0);
-                    location=SE3inv(T)*location;
-                    location.pop_back();
-                    location[2]+=0.05;  // safe margin
-                    return true;
-                }
-            }
-        }
-        else
-        {
+        
             cmd.addVocab(Vocab::encode("ask"));
             Bottle &content=cmd.addList().addList();
             content.addString("name");
             content.addString("==");
-            content.addString("Toy");
+            content.addString(objName);
             portLocation.write(cmd,reply);
 
             if (reply.size()>1)
@@ -158,7 +128,7 @@ bool ObjectRetriever::getLocation(Vector &location,
                 }
             }
         }
-    }
+    
 
     yError()<<"Unable to retrieve location";
     return false;

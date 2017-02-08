@@ -92,26 +92,48 @@ bool ObjectRecognition::updateModule() {
 
 bool ObjectRecognition::respond(const Bottle& command, Bottle& reply) {
     yInfo()<<"Got something, echo is on";
-    if (command.get(0).asString()=="quit")
+
+    vector<string> objects;
+
+    objects.push_back("one");
+    objects.push_back("two"); 
+    objects.push_back("three");
+    objects.push_back("four");
+    objects.push_back("five"); 
+    objects.push_back("six");
+    objects.push_back("seven");
+    
+        
+    if (command.get(0).asString()=="quit"){
         return false;
+    }
     else if (command.get(0).asString()=="return_locations")
     {  
-        yInfo()<<"returning locations";
-        if (objRet.getLocation(locations)){
+        for (int i = 0; i < objects.size(); i++)
+        {
+            yInfo()<<"returning locations";
+
+            if (objRet.getLocation(locations, objects.at(i)))
+            {
                 reply.clear();
                 reply.addDouble(locations[0]);
                 reply.addDouble(locations[1]);
                 reply.addDouble(locations[2]);
 
                 return true;
-            }else{
+            }
+            else{
                 yInfo() << "Could not return locations";
-                return false;}
+                return false;
+            }
+        }
+
 
     }else {
         reply.clear();
         reply.addString("error");
     }
+    
     return true;
 }
 

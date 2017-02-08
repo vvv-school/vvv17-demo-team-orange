@@ -19,6 +19,6 @@ class ObjectRetriever : yarp::os::PortReport
 
 public:
     ObjectRetriever();
-    bool getLocation(yarp::sig::Vector &location, const std::string &hand="dummy");
+    bool getLocation(yarp::sig::Vector &location, const std::string &objName, const std::string &hand="dummy");
     virtual ~ObjectRetriever();
 };
