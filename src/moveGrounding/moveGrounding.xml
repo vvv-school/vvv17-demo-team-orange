@@ -1,8 +1,8 @@
 <module>
-    <name>movePlanner</name>
+    <name>moveGrounding</name>
 
     <doxygen-group>orange Team VVV17</doxygen-group>
-    <description>Module for planning next move</description>
+    <description>Module for sending x,y positions of next goal</description>
     <copypolicy>Released under the terms of the GNU GPL v2.0</copypolicy>
     <version>1.0</version>
 
@@ -11,7 +11,7 @@
     </description-long>
 
     <authors>
-        <author email="gianmaria.marconi@iit.it"> Gian Maria Marconi </author>
+        <author> Massimiliano Iacono </author>
     </authors>
 <!--
     <arguments>
@@ -22,24 +22,24 @@
     <data>
 
         <input port_type="service">
-            <type>movePlanner_IDL</type>
-            <port carrier="tcp">/movePlanner/rpc:i</port>
-            <description>receives rpc commands: computeNextMove(...), resetBoard(), ...</description>
+            <type>moveGrounding</type>
+            <port carrier="tcp">/moveGroundingModule/rpc:i</port>
+            <description>receives computed next goal, it sends the x,y goal to master</description>
         </input>
 
         <!-- output datas if available -->
-        <output port_type="service">
+        <output port_type="stream">
             <type>yarp::os::Bottle</type>
-            <port carrier="tcp">/movePlanner/rpc:o</port>
+            <port carrier="tcp">/moveGroundingModule/rpc:o</port>
             <description>streams coded or encoded text messages</description>
         </output>
     </data>
 
     <services>
       <server>
-        <type>movePlanner_IDL</type>
-        <idl>movePlanner.thrift</idl>
-        <port>/movePlanner/rpc:i</port>
+        <type>moveGrounding</type>
+        <idl>moveGrounding.thrift</idl>
+        <port>/moveGrounding/rpc:i</port>
         <description>service port</description>
       </server>
     </services>

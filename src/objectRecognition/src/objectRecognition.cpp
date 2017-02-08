@@ -9,7 +9,7 @@
 #include <yarp/sig/all.h>
 #include <yarp/math/Math.h>
 
-#include "ObjectRecognition.h"
+#include "objectRecognition.h"
 #include <yarp/os/LogStream.h>
 
 using namespace std;
@@ -39,9 +39,9 @@ bool ObjectRecognition::configure(yarp::os::ResourceFinder &rf) {
     yInfo()<<"Configuring the object recog module...";
 
     // open all ports
-    bool ret = commandPort.open("/ObjectRecognition/command/rpc:i");
-     ret &= locationPort.open("/ObjectRecognition/location/rpc:o");
-     ret &= calibrationPort.open("/ObjectRecognition/calibration/rpc:o");
+    bool ret = commandPort.open("/objectRecognition/command/rpc:i");
+     ret &= locationPort.open("/objectRecognition/location/rpc:o");
+     ret &= calibrationPort.open("/objectRecognition/calibration/rpc:o");
    // ret &= inPort.open("/ObjectRecognition/rpc:o");
    // ret &= outPort.open("/ObjectRecognition/out");
     if(!ret) {

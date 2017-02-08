@@ -5,6 +5,7 @@
 #include <yarp/os/Vocab.h>
 #include <yarp/os/LogStream.h>
 #include <yarp/sig/Matrix.h>
+
 #include <yarp/math/Math.h>
 #include "helpers.h"
 
@@ -17,13 +18,16 @@ using namespace yarp::math;
 /***************************************************/
 ObjectRetriever::ObjectRetriever() : simulation(false)
 {
-    portLocation.open("ObjectRecognition/location");
-    portCalibration.open("/calibration");
+    portLocation.open("/objectRecognition/location/rpc:i");
+    portCalibration.open("/objectRecognition/calibration/rpc:i");
 
     portLocation.asPort().setTimeout(1.0);
     portCalibration.asPort().setTimeout(1.0);
 
     portLocation.setReporter(*this);
+    portCalibration.setReporter(*this);
+
+
 }
 
 /***************************************************/

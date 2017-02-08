@@ -16,7 +16,7 @@ bool movePlanner::updateModule()
     return true;
 }
 bool movePlanner::configure(yarp::os::ResourceFinder &rf)
-{    
+{
     yInfo()<<"Configuring move planner...";
     policy   = rf.check("policy", Value("random"), "Getting game policy").asString();
     portname = rf.check("RPCname", Value("/movePlanner/rpc:i"), "Getting RPC port name").asString();
@@ -28,10 +28,10 @@ bool movePlanner::configure(yarp::os::ResourceFinder &rf)
         yError()<<"Cannot open port";
         return false;
     }
-     
+
     if (!attach(RPCPort))
         return false;
-    
+
     board.resize(3,3);
     board.zero();
 
@@ -88,25 +88,25 @@ bool movePlanner::checkEnd()
         ( (board(0,2)==sign) && (board(1,1)==sign) && (board(2,0)==sign) )
         )
     {
-        winner = sign; 
+        winner = sign;
         return true;
     }
     return false;
-    
+
 }
 yarp::sig::Vector movePlanner::computeNextMove(const yarp::sig::Matrix & boardupdate)
 {
 
-    int diff = 0;
-    for (int idx=0; idx < 3; idx++){
-        for (int jdx=0; jdx < 3; jdx++){
-            if (board(idx,jdx) != boardupdate(idx,jdx))
-                diff++;
-        }
-    }
-    if (diff > 1)
-        yError()<<"Invalid board state";
-            
+    // int diff = 0;
+    // for (int idx=0; idx < 3; idx++){
+    //     for (int jdx=0; jdx < 3; jdx++){
+    //         if (board(idx,jdx) != boardupdate(idx,jdx))
+    //             diff++;
+    //     }
+    // }
+    // if (diff > 1)
+    //     yError()<<"Invalid board state";
+
     mutex.lock();
     board = boardupdate;
     mutex.unlock();
@@ -119,8 +119,8 @@ yarp::sig::Vector movePlanner::computeNextMove(const yarp::sig::Matrix & boardup
         resetBoard();
         return returnMove;
     }
-    if (policy == "random") returnMove = randomPolicy(); 
-    
+    if (policy == "random") returnMove = randomPolicy();
+
     return returnMove;
 }
 
@@ -162,7 +162,7 @@ yarp::sig::Vector movePlanner::randomPolicy()
     if ( n == 0 ) yError()<<"movePlanner: trying to make a move on a full board";
     int index = floor(Random::uniform(0,n));
     index *= 2;
-    
+
     yarp::sig::Vector nextMove;
     x = freePlaces[index];
     y = freePlaces[index+1];

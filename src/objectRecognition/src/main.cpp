@@ -2,7 +2,7 @@
 #include <yarp/os/LogStream.h>
 #include <yarp/os/ResourceFinder.h>
 
-#include "ObjectRecognition.h"
+#include "objectRecognition.h"
 using namespace yarp::os;
 
 

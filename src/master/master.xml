@@ -1,0 +1,68 @@
+<module>
+    <name>master</name>
+
+    <doxygen-group>orange Team VVV17</doxygen-group>
+    <description>Module for master</description>
+    <copypolicy>Released under the terms of the GNU GPL v2.0</copypolicy>
+    <version>1.0</version>
+
+    <description-long>
+    This module plans to define all the communications between all the other modules
+    </description-long>
+
+    <authors>
+        <author> Pedro Vicente </author>
+    </authors>
+
+    <data>
+
+        <input port_type="service">
+            <type>master</type>
+            <port carrier="tcp">/master/rpc:i</port>
+            <description>receives rpc commands: computeNextMove(...), resetBoard(), ...</description>
+        </input>
+
+        <!-- output datas if available -->
+        <output port_type="service">
+            <type>yarp::os::Bottle</type>
+            <port carrier="tcp">/master/objReco/rpc:o</port>
+            <description>client to ObjectRecognition</description>
+        </output>
+        <output port_type="service">
+            <type>yarp::os::Bottle</type>
+            <port carrier="tcp">/master/clap/rpc:o</port>
+            <description>client to ClapDuo</description>
+        </output>
+        <output port_type="service">
+            <type>yarp::os::Bottle</type>
+            <port carrier="tcp">/master/planner/rcp:o</port>
+            <description>client to movePlanner</description>
+        </output>
+        <output port_type="service">
+            <type>yarp::os::Bottle</type>
+            <port carrier="tcp">/master/pickandplace/rpc:o</port>
+            <description>client to PickAndPlace</description>
+        </output>
+        <output port_type="service">
+            <type>yarp::os::Bottle</type>
+            <port carrier="tcp">/master/moveGroundingModule/rpc:o</port>
+            <description>client to moveGrounding</description>
+        </output>
+        <output port_type="service">
+            <type>yarp::os::Bottle</type>
+            <port carrier="tcp">/master/emotions/rpc:o</port>
+            <description>client to Emotions module (optional)</description>
+        </output>
+    </data>
+
+    <services>
+      <server>
+        <type>master</type>
+        <idl>master.thrift</idl>
+        <port>/master/rpc:i</port>
+        <description>service port</description>
+      </server>
+    </services>
+ 
+
+</module>

@@ -1,0 +1,35 @@
+<module>
+    <name>pickAndPlace</name>
+
+    <doxygen-group>orange Team VVV17</doxygen-group>
+    <description>Module for moving the object to desired location</description>
+    <copypolicy>Released under the terms of the GNU GPL v2.0</copypolicy>
+    <version>1.0</version>
+
+    <description-long>
+    This module receives the desired location and executes the moving action
+    </description-long>
+
+    <authors>
+        <author> David Dabuss </author>
+        <author> Lukas Kaul </author>
+    </authors>
+
+    <data>
+
+        <input port_type="service">
+            <type>pickAndPlace</type>
+            <port carrier="tcp">/pickAndPlace/rpc:i</port>
+            <description>receives rpc commands: .</description>
+        </input>
+
+        <!-- output datas if available -->
+        <!--
+        <output port_type="stream">
+            <type>yarp::os::Bottle</type>
+            <port carrier="udp">/Codec/out</port>
+            <description>streams coded or encoded text messages</description>
+        </output>
+      -->
+    </data>
+</module>

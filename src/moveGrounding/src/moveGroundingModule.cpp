@@ -106,13 +106,16 @@ bool moveGroundingModule::init(const std::vector<double> &boardLocation){
 
     tiles.resize(9);
     int count = 0;
-    double boardSize = (std::fabs(topLeft[0] - bottomRight[0]) + std::fabs(topLeft[0] - bottomRight[0]))/2;
-    double tileSize = boardSize/3;
+    double boardHeight = bottomRight[0] - topLeft[0];
+    double boardWidth = bottomRight[1] - topLeft[1];
+    double tileHeight = boardHeight/3;
+    double tileWidth = boardWidth/3;
+
     for (int i = 0; i < 3; ++i) {
         for (int j = 0; j < 3; ++j) {
             Tile currTile;
-            currTile.x = topLeft[0] + i * tileSize;
-            currTile.y = topLeft[1] - j * tileSize;
+            currTile.x = topLeft[0] + i * tileHeight;
+            currTile.y = topLeft[1] + j * tileWidth;
             currTile.z= topLeft[2];
             currTile.i = i;
             currTile.j = j;

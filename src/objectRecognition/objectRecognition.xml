@@ -1,0 +1,64 @@
+<module>
+    <name>objectRecognition</name>
+
+    <doxygen-group>orange Team VVV17</doxygen-group>
+    <description>Module recognizing the objects</description>
+    <copypolicy>Released under the terms of the GNU GPL v2.0</copypolicy>
+    <version>1.0</version>
+
+    <description-long>
+    This module retrieves the x,y, z positions of the desired object
+    </description-long>
+
+    <authors>
+        <author> Baris Serhan </author>
+        <author> Marie Charbonneau </author>
+    </authors>
+
+    <data>
+
+        <input port_type="service">
+            <type>objRecog</type>
+            <port carrier="rpc">/objectRecognition/rpc:i</port>
+            <description>receives rpc commands</description>
+        </input>
+        <input port_type="service">
+            <type>objRecog</type>
+            <port carrier="rpc">/objectRecognition/command/rpc:i</port>
+            <description>receives rpc commands</description>
+        </input>
+        <input port_type="service">
+            <type>objRecog</type>
+            <port carrier="rpc">/objectRecognition/location/rpc:i</port>
+            <description>receives rpc commands</description>
+        </input>
+        <input port_type="service">
+            <type>objRecog</type>
+            <port carrier="rpc">/objectRecognition/calibration/rpc:i</port>
+            <description>receives rpc commands</description>
+        </input>
+
+        <!-- output datas if available -->
+        <output port_type="service">
+            <type>yarp::os::Bottle</type>
+            <port carrier="rpc">/objectRecognition/location/rpc:o</port>
+            <description>streams coded or encoded text messages</description>
+        </output>
+        <output port_type="service">
+            <type>yarp::os::Bottle</type>
+            <port carrier="rpc">/objectRecognition/calibration/rpc:o</port>
+            <description>streams coded or encoded text messages</description>
+        </output>
+    </data>
+
+    <services>
+      <server>
+        <type>objRecog</type>
+        <idl>objectRecognition.thrift</idl>
+        <port>/objectRecognition/rpc:i</port>
+        <description>service port</description>
+      </server>
+    </services>
+ 
+
+</module>
