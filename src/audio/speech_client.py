@@ -22,9 +22,18 @@ p = yarp.BufferedPortSound()
 p.open("/audio/in")
 
 DEBUG = sys.argv[1] == "debug"
-ICUB_PORT = "/icub/audio"
+#ICUB_PORT = "/icub/audio"
+
 #RPC_CLAP_NAME = "/master/rpc:i"
-RPC_SERVER_NAME = "/orange/test_rpc"
+if DEBUG:
+    print("Using /orange/test_rpc")
+    RPC_SERVER_NAME = "/orange/test_rpc"
+    ICUB_PORT = "/grabber/audio"
+else:
+    print("Using /master/rpc:i for output")
+    RPC_SERVER_NAME = "/master/rpc:i"
+    ICUB_PORT = "/icub/audio"
+
 RPC_LOCAL_CLIENT_NAME = "/clapDuo/master/rpc:o"
 #rpc_port =  yarp.RpcClient()
 rpc_port = yarp.Port()
@@ -34,6 +43,7 @@ if not rpc_port.open(RPC_LOCAL_CLIENT_NAME) and not DEBUG:
     sys.exit(-1)
 else:
     print("Connected to {}".format( RPC_LOCAL_CLIENT_NAME ))
+
 yarp.NetworkBase_connect(rpc_port.getName(), RPC_SERVER_NAME, "udp")
 
 
@@ -74,7 +84,7 @@ def logistic_detector( signal, sample_rate, frames_to_classify = 15 ):
     #predictions = model.predict( input )
     prediction_proba = model.predict_proba( input )
     print(prediction_proba)
-    predictions = [1 if p[1] > 0.75 else 0 for p in prediction_proba ]
+    predictions = [1 if p[1] > 0.65 else 0 for p in prediction_proba ]
     total_time = time.time() - start_time
     #print("Prediction took:{}".format(total_time))
     #print(predictions)
@@ -102,7 +112,7 @@ def nn_detector( signal, sample_rate, frames_to_classify = 15 ):
     pred = model.predict( input )
     pred = pred.ravel()
 
-    pred = [1 if p > 0.7 else 0 for p in pred]
+    pred = [1 if p > 0.75 else 0 for p in pred]
     #print(pred)
     total_time = time.time() - start_time
     #print("Prediction took:{}".format( total_time ))
