@@ -31,7 +31,7 @@ bool movePlanner::configure(yarp::os::ResourceFinder &rf)
 
     if (!attach(RPCPort))
         return false;
-
+    winner = 1000;
     board.resize(3,3);
     board.zero();
 
@@ -91,6 +91,20 @@ bool movePlanner::checkEnd()
         winner = sign;
         return true;
     }
+    bool tie = false;
+    for ( int idx=0; idx < 3; idx++)
+    {
+        for (int jdx=0; jdx <3; jdx++)
+        {
+            if (board(idx,jdx) == 0)
+                tie = true;
+        }
+    }
+    if (tie)
+    {
+        winner = 0;
+        return true;
+    }
     return false;
 
 }
@@ -113,11 +127,20 @@ yarp::sig::Vector movePlanner::computeNextMove(const yarp::sig::Matrix & boardup
     yarp::sig::Vector returnMove(0);
     if (checkEnd())
     {
-        returnMove.push_back(winner*42);
-        if (dbg_flag)
-            debugPlotState();
-        resetBoard();
-        return returnMove;
+        if (winner)
+        {
+            returnMove.push_back(winner*42);
+            if (dbg_flag)
+                debugPlotState();
+            resetBoard();
+            return returnMove;
+        } else {
+            returnMove.push_back(23);
+            if (dbg_flag)
+                debugPlotState();
+            resetBoard();
+            return returnMove;
+        }
     }
     if (policy == "random") returnMove = randomPolicy();
 

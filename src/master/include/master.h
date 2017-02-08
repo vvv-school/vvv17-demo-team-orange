@@ -54,7 +54,7 @@ public:
     Vector NextMove;
     Vector BoardPose;
     Vector startPose;
-    
+    int GameStateInt;
 
 private:
 
@@ -65,12 +65,15 @@ private:
     yarp::os::RpcClient rpcGameState;
     yarp::os::RpcClient rpcEmotions;
 
+    BufferedPort<Bottle> speak;
+
     string rpcObjRecoName;
     string rpcClapName;
     string rpcPlannerName;
     string rpcPickPlaceName;
     string rpcGameStateName;
     string rpcEmotionsName;
+    string speakName;
     void stateMachine();
     bool openPorts();
 
