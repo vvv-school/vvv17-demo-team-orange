@@ -134,7 +134,9 @@ bool MasterModule::reset() {
 bool MasterModule::triggerNextMove() {
     yInfo() << "MasterModule: " << "Received triggerNextMove command in RPC";
     comunThread->mutexThread.lock();
-    comunThread->clapReceived = true;
+    if(!comunThread->myturn) { // If it's my turn ignore command
+        comunThread->clapReceived = true;
+    }
     comunThread->mutexThread.unlock();
     
     return true;
