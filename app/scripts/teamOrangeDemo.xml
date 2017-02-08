@@ -16,7 +16,7 @@
 </module>
 
 <module>
-    <name>objRecognition</name>
+    <name>objectRecognition</name>
     <node>localhost</node>
 </module>
 
@@ -45,8 +45,18 @@
 <!-- rpcClient connection to Object Recognition Module-->
 <connection>
     <from>/master/objReco/rpc:o</from>
-    <to>/objRecognition/rpc:i</to>
+    <to>/ObjectRecognition/command/rpc:i</to>
 </connection>
+
+<connection>
+    <from>/ObjectRecognition/location/rpc:o</from>
+    <to>/ObjectRecognition/location/rpc:i</to>
+
+<connection>
+    <from>"/ObjectRecognition/calibration/rpc:o</from>
+    <to>/ObjectRecognition/calibration/rpc:i</to>
+
+
 
 <!-- rpcClient connection to ClapDuo Module-->
 <connection>
