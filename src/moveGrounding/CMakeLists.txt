@@ -25,13 +25,27 @@ icubcontrib_set_default_prefix()
 
 # building module
 include_directories(${YARP_INCLUDE_DIRS}
-                    src
-                    src/idl)
+        ${PROJECT_SOURCE_DIR}/include)
+
+include(YarpIDL)
+yarp_add_idl(IDL_GEN_FILES moveGrounding.thrift)
+
+
+file(GLOB source src/*.cpp)
+file(GLOB headers include/*.h)
+set(idl ${PROJECT_NAME}.thrift)
+
+source_group("Source Files" FILES ${source})
+source_group("Header Files" FILES ${headers})
+source_group("idl_files" FILES ${idl})
 
 # buulding server
-add_executable(moveGrounding
-               src/idl/moveGrounding.cpp
-        src/moveGroundingModule.cpp
-               src/main.cpp)
+add_executable(${PROJECT_NAME}
+        ${source}
+        ${headers}
+        ${idl}
+        ${IDL_GEN_FILES})
+
+
 target_link_libraries(moveGrounding ${YARP_LIBRARIES})
 install(TARGETS moveGrounding DESTINATION bin)

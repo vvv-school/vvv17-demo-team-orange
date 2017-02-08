@@ -21,25 +21,33 @@ include(YarpInstallationHelpers)
 include(ICUBcontribHelpers)
 include(ICUBcontribOptions)
 
+
 # specify to install in $ICUBcontrib_DIR/bin
 icubcontrib_set_default_prefix()
 
 # import math symbols from standard cmath
 #add_definitions(-D_MY_DEFINITION)
 
+include(YarpIDL)
 # generate thrift idl file
-yarp_add_idl(IDL_GEN_FILES idl/${PROJECT_NAME}.thrift)
+yarp_add_idl(IDL_GEN_FILES ${PROJECT_NAME}.thrift)
+
+file(GLOB source src/*.cpp)
+file(GLOB headers include/*.h)
+set(idl ${PROJECT_NAME}.thrift)
+
+source_group("Source Files" FILES ${source})
+source_group("Header Files" FILES ${headers})
+source_group("idl_files" FILES ${idl})
 
 # building module
 include_directories(${YARP_INCLUDE_DIRS}
-                    ssrc
-                    ${CMAKE_CURRENT_BINARY_DIR}/include/idl/)
+        ${PROJECT_SOURCE_DIR}/include)
 
 add_executable(${PROJECT_NAME}
-               src/main.cpp
-               src/movePlanner.cpp
-               src/movePlanner.h
-               ${idl}
+               ${source}
+               ${headers}
+                ${idl}
                ${IDL_GEN_FILES})
 
 target_link_libraries(${PROJECT_NAME} ${YARP_LIBRARIES})

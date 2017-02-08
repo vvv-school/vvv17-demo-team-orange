@@ -39,7 +39,9 @@ bool ObjectRecognition::configure(yarp::os::ResourceFinder &rf) {
     yInfo()<<"Configuring the object recog module...";
 
     // open all ports
-    bool ret = commandPort.open("/ObjectRecognition/rpc:i");
+    bool ret = commandPort.open("/ObjectRecognition/command/rpc:i");
+     ret &= locationPort.open("/ObjectRecognition/location/rpc:i");
+     ret &= calibrationPort.open("/ObjectRecognition/calibration/rpc:i");
    // ret &= inPort.open("/ObjectRecognition/rpc:o");
    // ret &= outPort.open("/ObjectRecognition/out");
     if(!ret) {
@@ -51,6 +53,17 @@ bool ObjectRecognition::configure(yarp::os::ResourceFinder &rf) {
         yError()<<"Cannot attach to the commandPort";
         return false;
     }
+
+    if(!attach(locationPort)) {
+        yError()<<"Cannot attach to the locationPort";
+        return false;
+    }
+
+    if(!attach(calibrationPort)) {
+        yError()<<"Cannot attach to the calibrationPort";
+        return false;
+    }
+
 
     // set some paramters
     modeParam = rf.check("mode", Value("coder")).asString();
@@ -86,6 +99,7 @@ bool ObjectRecognition::updateModule() {
     output.clear();
     output.addString(data.c_str());
     outPort.write();
+    
     */return true;
 }
 
@@ -101,33 +115,39 @@ bool ObjectRecognition::respond(const Bottle& command, Bottle& reply) {
     objects.push_back("four");
     objects.push_back("five"); 
     objects.push_back("six");
-    objects.push_back("seven");
-    
+  
+    int objCounter=0;
         
     if (command.get(0).asString()=="quit"){
         return false;
     }
     else if (command.get(0).asString()=="return_locations")
     {  
+        reply.clear();
         for (int i = 0; i < objects.size(); i++)
         {
             yInfo()<<"returning locations";
 
             if (objRet.getLocation(locations, objects.at(i)))
             {
-                reply.clear();
+                
                 reply.addDouble(locations[0]);
                 reply.addDouble(locations[1]);
                 reply.addDouble(locations[2]);
-
-                return true;
+                objCounter++;
+                yInfo() << "Current number of objects = " << objCounter << " current object = " << objects.at(i) ;
+                
             }
             else{
-                yInfo() << "Could not return locations";
-                return false;
+                yInfo() << objects.at(i) << "does not exist on the board";
+                reply.addDouble(0.0);
+                reply.addDouble(0.0);
+                reply.addDouble(0.0);
             }
+
         }
 
+        return true;
 
     }else {
         reply.clear();
@@ -148,6 +168,8 @@ bool ObjectRecognition::interruptModule() {
 bool ObjectRecognition::close() {
     yInfo()<<"closing module";
     commandPort.close();
+    locationPort.close();
+    calibrationPort.close();
   //  inPort.close();
     // you can force writing remaining data
     // using outPort.writeStrict();

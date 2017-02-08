@@ -1,2 +1,0 @@
-moveGrounding.h
-moveGrounding.cpp
