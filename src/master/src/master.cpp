@@ -240,12 +240,22 @@ void MasterThread::stateMachine() {
                 cmd.clear();
                 cmd.addString("return_locations");
                 rpcObjReco.write(cmd, reply);
-                mutexThread.lock();
-                ObjectLoc = reply;
-                mutexThread.unlock();
 
+                if(reply.size () <= 0) {
+                    yError() << "I have an empty Bottle from Object Reco...";
+                    break;
+                }
+                mutexThread.lock();
+                if(reply.get(0).asString()=="objectNotFound") {
+                    ObjectLoc.clear();
+                }
+                else {
+                    ObjectLoc = reply;
+                }
+                mutexThread.unlock();
                 yInfo() << "Receive Object Recognition Bottle: ";
                 yInfo() << reply.toString();
+                if()
                 statemyturn++;
             }
             case 1: // SEND OBJECT LOCATION TO GROUNDING AND RECEIVE NEXT 3D POSITION TO PUT THE OBJECT
