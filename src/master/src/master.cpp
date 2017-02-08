@@ -162,6 +162,7 @@ void MasterThread::run(){
         }
         else if(sendCommands){
                 Bottle cmd,reply;
+                /* DON'T send setStart
                 cmd.clear();
                 reply.clear();
                 cmd.addString("setStart"); // Cups position NOT FINISHED!!!!!
@@ -176,7 +177,7 @@ void MasterThread::run(){
                 else if(reply.get(0).asString()=="nack") {
                     yError() << "PicKPlace Set GoalPos not Ok";
                     return;
-                }
+                } */
                 cmd.clear();
                 reply.clear();
                 cmd.addString("init");
@@ -314,6 +315,13 @@ void MasterThread::stateMachine() {
                         statemyturn = 0;
                         myturn = false;
                         speakBottle.addString("I lost. You are good in this");
+                        speak.write();
+                    }
+                    else if(newBottle->get(0).asDouble()==23) {
+                        yInfo() << "It's a draw!";
+                        statemyturn = 0;
+                        myturn = false;
+                        speakBottle.addString("It's a draw!");
                         speak.write();
                     }
                     else if(newBottle->get(0).asDouble()>=1) {
@@ -473,6 +481,7 @@ bool MasterThread::interrupt(){
     rpcPickPlace.interrupt();
     rpcGameState.interrupt();
     rpcEmotions.interrupt();
+    speak.interrupt();
     return true;
 }
 bool MasterThread::close() {
@@ -485,11 +494,12 @@ bool MasterThread::close() {
     rpcPickPlace.close();
     rpcGameState.close();
     rpcEmotions.close();
+    speak.close();
     return true;
 
 }
 void MasterThread::threadRelease() {
-    yInfo() << "I my God they kill Kenny - the Master Thread";
+    yInfo() << "Oh my God they kill Kenny - the Master Thread";
         //getchar();
 }
 
