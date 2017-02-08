@@ -15,6 +15,8 @@
 
 
 #include <moveGrounding.h>
+#include <movePlanner_IDL.h>
+
 struct Tile {
     double x;
     double y;
@@ -45,7 +47,10 @@ private:
     yarp::os::RpcClient requestPort;                    // command port
     std::vector <Tile> tiles;
     yarp::sig::Matrix gameState;
+    movePlanner_IDL iMovePlanner;
 
     bool updateState(int i, int j, int val);
-};
+    yarp::sig::Vector askNextMove();
+
+    };
 

@@ -151,7 +151,7 @@ bool ObjectRecognition::respond(const Bottle& command, Bottle& reply) {
 
         }
 
-        if(objCounter==0) reply.addString("object not found!");
+        if(objCounter==0) reply.addString("objectNotFound");
         return true;
        
 

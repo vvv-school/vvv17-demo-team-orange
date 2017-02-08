@@ -11,7 +11,7 @@
 
 <module>
     <name>master</name>
-    <parameters>--whostarts robot --initBoardPosition "(0 1 2 0 1 2)" --GoalInit "(1 1 1)"</parameters>
+    <parameters>--whostarts robot --initBoardPosition "(-0.3 -0.1 0.2 -0.1 0.1 0.2)" --GoalInit "(-0.15 -0.2 0.2)"</parameters>
     <node>localhost</node>
 </module>
 
@@ -22,11 +22,6 @@
 
 <module>
     <name>pickAndPlace</name>
-    <node>localhost</node>
-</module>
-
-<module>
-    <name>clapDuo</name>
     <node>localhost</node>
 </module>
 
@@ -60,17 +55,21 @@
 
 
 <!-- rpcClient connection to ClapDuo Module-->
-<connection>
+<!--<connection>
     <from>/master/clap/rpc:o</from>
     <to>/clapDuo/rpc:i</to>
 </connection>
-
-<!-- rpcClient connection to Move Planner Module-->
+-->
+<connection>
+    <from>/clapDuo/master/rpc:o</from>
+    <to>/master/rpc:i</to>
+</connection>
+<!-- rpcClient connection to Move Planner Module
 <connection>
     <from>/movePlanner/rpc:o</from>
     <to>/moveGroundingModule/rpc:i</to>
 </connection>
-
+-->
 <!-- rpcClient connection to Pick And Place Module-->
 <connection>
     <from>/master/pickandplace/rpc:o</from>
@@ -80,10 +79,19 @@
     <from>/master/planner/rpc:o</from>
     <to>/movePlanner/rpc:i</to>
 </connection>
+
+<connection>
+    <from>/moveGroundingModule/rpc:o</from>
+    <to>/movePlanner/rpc:i</to>
+</connection>
 <!-- rpcClient connection to Move Grounding Module-->
 <connection>
-    <from>/master/moveGroundingModule/rpc:o</from>
+    <from>/master/moveGrounding/rpc:o</from>
     <to>/moveGroundingModule/rpc:i</to>
 </connection>
 
+<connection>
+    <from>/master/speak</from>
+    <to>/iSpeak</to>
+</connection>
 </application>

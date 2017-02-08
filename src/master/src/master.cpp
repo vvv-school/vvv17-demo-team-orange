@@ -208,12 +208,17 @@ void MasterThread::run(){
 void MasterThread::stateMachine() {
 
     Bottle cmd, reply;
+
     // Not My Turn
     if(!myturn) {
         yInfo() << "It's not my turn";
         mutexThread.lock();
         if(clapReceived) { 
             yInfo() << "But, I have received a Clap";
+            Bottle& speakBottle = speak.prepare();            
+            speakBottle.clear();
+            speakBottle.addString("You played well. It's my turn now!");
+            speak.write();
             myturn=true; 
             clapReceived = false;
             mutexThread.unlock();
@@ -240,10 +245,22 @@ void MasterThread::stateMachine() {
                 cmd.clear();
                 cmd.addString("return_locations");
                 rpcObjReco.write(cmd, reply);
-                mutexThread.lock();
-                ObjectLoc = reply;
-                mutexThread.unlock();
 
+                if(reply.size () <= 0) {
+                    yError() << "I have an empty Bottle from Object Reco...";
+                    
+                    break;
+                }
+                mutexThread.lock();
+                if(reply.get(0).asString()=="objectNotFound") {
+                    ObjectLoc.clear();
+                    GameStateInt = -1;
+                }
+                else {
+                    ObjectLoc = reply;
+                    GameStateInt = 1;
+                }
+                mutexThread.unlock();
                 yInfo() << "Receive Object Recognition Bottle: ";
                 yInfo() << reply.toString();
                 statemyturn++;
@@ -263,12 +280,13 @@ void MasterThread::stateMachine() {
                 mutexThread.lock();
                 cmd.addList() = ObjectLoc;
                 mutexThread.unlock();
-                cmd.addInt(1);
+                cmd.addInt(GameStateInt);
                 yInfo() << " Object Location: " << cmd.toString();
                 reply.clear();
                 rpcGameState.write(cmd, reply);
                 if(reply.size () <= 0) {
                     yError() << "I received a empty Bottle from the Grounding aka gameState";
+                    
                     break;
                 }
                 yInfo() << "I have received the next 3D position: ";
@@ -279,7 +297,39 @@ void MasterThread::stateMachine() {
                 NextMove[2] = reply.get(2).asDouble();
                 */
                 Bottle *newBottle = reply.get(0).asList();
-
+                if(newBottle->size()==1) {
+                    Bottle& speakBottle = speak.prepare();            
+                    speakBottle.clear();
+                    if(newBottle->get(0).asDouble()==0) {
+                        yInfo() << "Not our turn!";
+                        speakBottle.addString("Sorry! It's not my turn. Make your move");
+                        speak.write();
+                        myturn=true; 
+                        statemyturn = 0;
+                        myturn = false;
+  
+                    }
+                    else if(newBottle->get(0).asDouble()<=-1) {
+                        yInfo() << "We lost!";
+                        statemyturn = 0;
+                        myturn = false;
+                        speakBottle.addString("I lost. You are good in this");
+                        speak.write();
+                    }
+                    else if(newBottle->get(0).asDouble()>=1) {
+                        yInfo() << "We won!";
+                        statemyturn = 0;
+                        myturn = false;
+                        speakBottle.addString("I Won. I'm the best player ever!");
+                        speak.write();
+                    }
+                    else {
+                        speakBottle.addString("something went terrible wrong");
+                        speak.write();   
+                        yError() << "size 1, I dont know what is...";
+                    }
+                    break;                     
+                }
                 NextMove[0] =newBottle->get(0).asDouble();
                 NextMove[1] =newBottle->get(1).asDouble();
                 NextMove[2] =newBottle->get(2).asDouble();
@@ -309,6 +359,10 @@ void MasterThread::stateMachine() {
                 cmd.clear();
                 reply.clear();
                 cmd.addString("pickAndPlace");
+                Bottle& speakBottle = speak.prepare();            
+                speakBottle.clear();
+                speakBottle.addString("Check this out. My next move will be outstanding!");
+                speak.write();
                 rpcPickPlace.write(cmd,reply);
                 if(reply.size () <= 0) {
                     yError() << " PickPlace empty Bottle in pickPlace task";
@@ -390,7 +444,15 @@ bool MasterThread::openPorts()
         yError("%s : Unable to open port %s\n", moduleName.c_str(), rpcEmotionsName.c_str());
         return false;
     }
-
+    speakName = "/speak/"+moduleName+speakName;
+    yInfo() << "Opennin speech";
+    
+    if (!speak.open(speakName.c_str()))
+    {
+        yError("%s : Unable to open port %s\n", moduleName.c_str(), speakName.c_str());
+        return false;
+    }
+    yInfo() << "Now";
     return true;
 }
 

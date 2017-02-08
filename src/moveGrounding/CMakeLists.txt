@@ -23,21 +23,22 @@ icubcontrib_set_default_prefix()
 # import math symbols from standard cmath
 #add_definitions(-D_MY_DEFINITION)
 
-
 # building module
 include_directories(${YARP_INCLUDE_DIRS}
         ${PROJECT_SOURCE_DIR}/include
-        )
+        ${movePlanner_BINARY_DIR}/include)
 
 include(YarpIDL)
-yarp_add_idl(IDL_GEN_FILES moveGrounding.thrift)
+yarp_add_idl(IDL_GEN_FILES moveGrounding.thrift ${movePlanner_SOURCE_DIR}/movePlanner.thrift)
 
+#message(status "XXXXXXXXXXXXXXXX ${movePlanner_BINARY_DIR}/src")
 
 file(GLOB source src/*.cpp)
-file(GLOB headers include/*.h)
+file(GLOB headers include/*.h
+                  ${movePlanner_BINARY_DIR}/include/*.h)
 set(idl ${PROJECT_NAME}.thrift)
 
-source_group("Source Files" FILES ${source})
+source_group("Source Files" FILES ${source}) 
 source_group("Header Files" FILES ${headers})
 source_group("idl_files" FILES ${idl})
 
