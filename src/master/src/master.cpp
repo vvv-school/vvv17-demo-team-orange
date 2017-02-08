@@ -255,7 +255,6 @@ void MasterThread::stateMachine() {
                 mutexThread.unlock();
                 yInfo() << "Receive Object Recognition Bottle: ";
                 yInfo() << reply.toString();
-                if()
                 statemyturn++;
             }
             case 1: // SEND OBJECT LOCATION TO GROUNDING AND RECEIVE NEXT 3D POSITION TO PUT THE OBJECT
@@ -273,7 +272,7 @@ void MasterThread::stateMachine() {
                 mutexThread.lock();
                 cmd.addList() = ObjectLoc;
                 mutexThread.unlock();
-                cmd.addInt(1);
+                cmd.addInt(-1);
                 yInfo() << " Object Location: " << cmd.toString();
                 reply.clear();
                 rpcGameState.write(cmd, reply);
@@ -289,7 +288,15 @@ void MasterThread::stateMachine() {
                 NextMove[2] = reply.get(2).asDouble();
                 */
                 Bottle *newBottle = reply.get(0).asList();
-
+                if(newBottle->size()==1) {
+                    if(newBottle->get(0).asDouble()>0) {
+                        yInfo() << "We won!";
+                        statemyturn = 0;
+                        myturn = false;
+                        break;   
+                    }
+                                        
+                }
                 NextMove[0] =newBottle->get(0).asDouble();
                 NextMove[1] =newBottle->get(1).asDouble();
                 NextMove[2] =newBottle->get(2).asDouble();
