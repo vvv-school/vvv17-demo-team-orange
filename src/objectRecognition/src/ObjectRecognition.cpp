@@ -110,8 +110,19 @@ bool ObjectRecognition::respond(const Bottle& command, Bottle& reply) {
   
     int objCounter=0;
         
-    if (command.get(0).asString()=="quit"){
+    if (command.get(0).asString()=="help"){
+
+        reply.addVocab(Vocab::encode("many"));
+        reply.addString("Available Commands:");
+        reply.addString("- quit");
+        reply.addString("- return_locations (returns x, y, z coordinates of the detected objects)");
+
+        return true;
+    }
+    else if (command.get(0).asString()=="quit"){
+
         return false;
+
     }
     else if (command.get(0).asString()=="return_locations")
     {  
@@ -132,14 +143,17 @@ bool ObjectRecognition::respond(const Bottle& command, Bottle& reply) {
             }
             else{
                 yInfo() << objects.at(i) << "does not exist on the board";
-                reply.addDouble(0.0);
-                reply.addDouble(0.0);
-                reply.addDouble(0.0);
+               // reply.addDouble(0.0);
+               // reply.addDouble(0.0);
+               // reply.addDouble(0.0);
             }
+
 
         }
 
+        if(objCounter==0) reply.addString("object not found!");
         return true;
+       
 
     }else {
         reply.clear();
