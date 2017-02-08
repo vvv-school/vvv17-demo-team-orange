@@ -2,16 +2,16 @@
     <name>movePlanner</name>
 
     <doxygen-group>orange Team VVV17</doxygen-group>
-    <description>assignemnt Coder Decoder with thrifft idl interface</description>
+    <description>Module for planning next move</description>
     <copypolicy>Released under the terms of the GNU GPL v2.0</copypolicy>
     <version>1.0</version>
 
     <description-long>
-    This module implements a simple string coder/decoder.
+    This module plans for the next move given the updated state of the board
     </description-long>
 
     <authors>
-        <author email="ali.paikan@iit.it"> Ali Paikan </author>
+        <author email="gianmaria.marconi@iit.it"> Gian Maria Marconi </author>
     </authors>
 <!--
     <arguments>
@@ -22,9 +22,9 @@
     <data>
 
         <input port_type="service">
-            <type>yarp::os::Bottle</type>
+            <type>movePlanner_IDL</type>
             <port carrier="tcp">/movePlanner/rpc:i</port>
-            <description>receives rpc commands: computeNextMove(...), reset(), ...</description>
+            <description>receives rpc commands: computeNextMove(...), resetBoard(), ...</description>
         </input>
 
         <!-- output datas if available -->
@@ -36,5 +36,15 @@
         </output>
       -->
     </data>
+
+    <services>
+      <server>
+        <type>movePlanner_IDL</type>
+        <idl>movePlanner.thrift</idl>
+        <port>/movePlanner/rpc:i</port>
+        <description>service port</description>
+      </server>
+    </services>
+ 
 
 </module>

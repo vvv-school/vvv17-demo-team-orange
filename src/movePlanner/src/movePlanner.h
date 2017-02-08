@@ -2,16 +2,19 @@
 #include <stdio.h>
 #include <iostream>
 #include <iomanip>
-#include <yarp/os/Network.h>
-#include <yarp/os/RFModule.h>
 #include <yarp/sig/Matrix.h>
-#include <yarp/os/RpcServer.h>
 #include <movePlanner_IDL.h>
+#include <yarp/os/all.h>
+#include <math.h>       /* floor */
 
 class movePlanner:public yarp::os::RFModule,
                         public movePlanner_IDL
 {
-    int  CNT;
+    bool                    dbg_flag;;
+    int                     winner; // 1=icub, -1=opponent
+    //int                     x, y, lindex;
+    yarp::os::ConstString   policy;
+    yarp::os::ConstString   portname;
     yarp::sig::Matrix       board;
     yarp::os::Mutex         mutex;
     yarp::os::RpcServer     RPCPort;
@@ -42,14 +45,29 @@ public:
     bool close();
     
     // Function available at the RPC port
-    yarp::sig::Vector computeNextMove(yarp::sig::Matrix state);
+    yarp::sig::Vector computeNextMove(const yarp::sig::Matrix &boardupdate);
+    
+    // overloading the 
+    yarp::sig::Vector updateNextMove( int x, int y);
+    
+    // resets the state
+    void resetBoard();
 
 private:
-    // updates the game state, can accept the position of the move as an idex of
-    // the vectorized matrix
-    bool updateGameState(int x, int y = -1);
-
+    
+    yarp::sig::Vector freePlaces;
+    
     // check if the game is over
     bool checkEnd();
+    
+    // computes a random valid move
+    yarp::sig::Vector randomPolicy();
+    
+    // plots to debug the board state
+    void debugPlotState();
+    
+    //void lindex2xy(int lindex, int& x, int& y);
+    
+    //void xy2lindex(int x, int y, int& lindex);
 
 };

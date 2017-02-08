@@ -22,5 +22,5 @@ icubcontrib_set_default_prefix()
 # modules that do not need OpenCV
 add_subdirectory(master)
 add_subdirectory(pickAndPlace)
-#add_subdirectory(movePlanner)
+add_subdirectory(movePlanner)
 add_subdirectory(moveGrounding)

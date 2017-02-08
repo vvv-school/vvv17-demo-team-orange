@@ -28,17 +28,17 @@ icubcontrib_set_default_prefix()
 #add_definitions(-D_MY_DEFINITION)
 
 # generate thrift idl file
-yarp_add_idl(IDL_GEN_FILES ${CMAKE_SOURCE_DIR}/idl/${PROJECT_NAME}.thrift)
+yarp_add_idl(IDL_GEN_FILES idl/${PROJECT_NAME}.thrift)
 
 # building module
 include_directories(${YARP_INCLUDE_DIRS}
-                    ${CMAKE_SOURCE_DIR}/src
+                    ssrc
                     ${CMAKE_CURRENT_BINARY_DIR}/include/idl/)
 
 add_executable(${PROJECT_NAME}
-               ${CMAKE_SOURCE_DIR}/src/main.cpp
-               ${CMAKE_SOURCE_DIR}/src/movePlanner.cpp
-               ${CMAKE_SOURCE_DIR}/src/movePlanner.h
+               src/main.cpp
+               src/movePlanner.cpp
+               src/movePlanner.h
                ${idl}
                ${IDL_GEN_FILES})
 
@@ -47,10 +47,11 @@ install(TARGETS ${PROJECT_NAME} DESTINATION bin)
 
 
 # generate ad-hoc project to perform "make uninstall"
-icubcontrib_add_uninstall_target()
+#icubcontrib_add_uninstall_target()
 
 #file(GLOB scripts ${CMAKE_SOURCE_DIR}/app/scripts/*.xml)
 #yarp_install(FILES ${scripts} DESTINATION ${ICUBCONTRIB_APPLICATIONS_INSTALL_DIR})
 
 #file(GLOB scripts ${CMAKE_SOURCE_DIR}/app/scripts/*.xml)
 yarp_install(FILES movePlanner.xml DESTINATION ${ICUBCONTRIB_MODULES_INSTALL_DIR})
+
