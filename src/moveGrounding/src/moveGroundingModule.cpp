@@ -92,10 +92,19 @@ bool retrievePointFromList(std::vector<double> list, int startIdx, yarp::sig::Ve
 bool moveGroundingModule::init(const std::vector<double> &boardLocation){
     yarp::sig::Vector topLeft(3);
     yarp::sig::Vector bottomRight(3);
-     if (!retrievePointFromList(boardLocation,0,topLeft))
+     if (!retrievePointFromList(boardLocation,0,topLeft)) {
+         yInfo() << "Could not retrieve top left corner";
+         return false;
+     }
+    if (!retrievePointFromList(boardLocation,3,bottomRight)) {
+        yInfo() << "Could not retrieve bottom right corner";
         return false;
-    if (!retrievePointFromList(boardLocation,3,bottomRight))
-        return false;
+    }
+
+    yInfo() << "Retrieved topLeft  = [ " << topLeft[0] << ", " << topLeft[1] << ", " << topLeft[2] << "]" ;
+    yInfo() << "Retrieved bottomRight = [ " << bottomRight[0] << ", " << bottomRight[1] << ", " << bottomRight[2] << "]" ;
+
+
 
     double boardSize = (std::fabs(topLeft[0] - bottomRight[0]) + std::fabs(topLeft[0] - bottomRight[0]))/2;
     double tileSize = boardSize/3;
@@ -131,6 +140,8 @@ yarp::sig::Vector askNextMove(){
 }
 
 yarp::sig::Vector moveGroundingModule::computeNextMove(const std::vector<double> & objLocation, const int32_t playerFlag){
+
+   yInfo() << "Grounding!";
     yarp::sig::Vector placeLocation(objLocation.size());
     yarp::sig::Vector point (3);
     yarp::sig::Vector tileLocation (3);
@@ -157,9 +168,12 @@ yarp::sig::Vector moveGroundingModule::computeNextMove(const std::vector<double>
             stateUpdated |= updateState(closestTile.i, closestTile.j, playerFlag);
         }
         i += 3;
+        yInfo() << "Retrieved point " << i/3 << " = [ " << point[0] << ", " << point[1] << ", " << point[2] << "]" ;
+
     }
 
     if (stateUpdated){
+        yInfo() << "State Updated";
         if (playerFlag == -1){
             placeLocation = askNextMove();
         } else{
@@ -168,6 +182,7 @@ yarp::sig::Vector moveGroundingModule::computeNextMove(const std::vector<double>
             placeLocation[2] = closestTile.z;
         }
     } else{
+        yInfo() << "State not updated";
         placeLocation.clear();
     }
 

@@ -23,9 +23,11 @@ icubcontrib_set_default_prefix()
 # import math symbols from standard cmath
 #add_definitions(-D_MY_DEFINITION)
 
+
 # building module
 include_directories(${YARP_INCLUDE_DIRS}
-        ${PROJECT_SOURCE_DIR}/include)
+        ${PROJECT_SOURCE_DIR}/include
+        )
 
 include(YarpIDL)
 yarp_add_idl(IDL_GEN_FILES moveGrounding.thrift)
