@@ -17,8 +17,8 @@ using namespace yarp::math;
 /***************************************************/
 ObjectRetriever::ObjectRetriever() : simulation(false)
 {
-    portLocation.open("ObjectRecognition/location");
-    portCalibration.open("/calibration");
+    portLocation.open("ObjectRecognition/location/rpc:o");
+    portCalibration.open("ObjectRecognition/calibration/rpc:o");
 
     portLocation.asPort().setTimeout(1.0);
     portCalibration.asPort().setTimeout(1.0);
