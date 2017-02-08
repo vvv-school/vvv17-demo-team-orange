@@ -135,7 +135,7 @@ protected:
                     yInfo()<<"Force threshold exceeded";
                 }
             }
-            Time::delay(1);
+            Time::delay(0.1);
 
         }
         yInfo()<<"stopping motion ...";
@@ -196,8 +196,10 @@ protected:
             if (ilim->getLimits(j, &min_j, &max_j))
             {
                 double jointValue = min_j + fingers_closure_sat * (max_j - min_j); // formula that was given...
-                ipos->setRefAcceleration(j, 200);
-                ipos->setRefSpeed(j, 30);
+                //ipos->setRefAcceleration(j, 200);
+                //ipos->setRefSpeed(j, 30);
+                ipos->setRefAcceleration(j, 70);
+                ipos->setRefSpeed(j, 15);
                 imod->setControlMode(j, VOCAB_CM_POSITION);
                 ipos->positionMove(j, jointValue);
             }
@@ -367,7 +369,7 @@ public:
         string robot=rf.check("robot",Value("icubSim")).asString();
 
         initial_approach_height = 0.25;
-        force_threshold = 5.0;
+        force_threshold = 10;
 
         pick_location.resize(3);
         pick_location[0] = -0.3;
@@ -426,7 +428,7 @@ public:
 
         drvArmL.view(iarm);
         iarm->storeContext(&startup_ctxt_arm_left);
-
+        iarm->setTrajTime(2);
         drvGaze.view(igaze);
         igaze->storeContext(&startup_ctxt_gaze);
 
