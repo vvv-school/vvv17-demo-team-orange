@@ -104,18 +104,21 @@ bool moveGroundingModule::init(const std::vector<double> &boardLocation){
     yInfo() << "Retrieved topLeft  = [ " << topLeft[0] << ", " << topLeft[1] << ", " << topLeft[2] << "]" ;
     yInfo() << "Retrieved bottomRight = [ " << bottomRight[0] << ", " << bottomRight[1] << ", " << bottomRight[2] << "]" ;
 
-
-
+    tiles.resize(9);
+    int count = 0;
     double boardSize = (std::fabs(topLeft[0] - bottomRight[0]) + std::fabs(topLeft[0] - bottomRight[0]))/2;
     double tileSize = boardSize/3;
     for (int i = 0; i < 3; ++i) {
         for (int j = 0; j < 3; ++j) {
-            Tile currTile = tiles[i*j];
+            Tile currTile;
             currTile.x = topLeft[0] + i * tileSize;
             currTile.y = topLeft[1] - j * tileSize;
             currTile.z= topLeft[2];
             currTile.i = i;
             currTile.j = j;
+            tiles[count] = currTile;
+            count ++;
+            yInfo() << "Tile location "<< count <<" = [ " << currTile.x << ", " << currTile.y << ", " << currTile.z << "]" ;
         }
     }
     return true;
@@ -124,7 +127,7 @@ bool moveGroundingModule::init(const std::vector<double> &boardLocation){
 bool moveGroundingModule::updateState(int i, int j, int val) {
     if (gameState(i,j) == val) {
         return false;
-    } else if (!gameState(i,j) || gameState(i,j) == -val){
+    } else if (gameState(i,j) != 0 || gameState(i,j) == -val){
         yInfo() << "Trying to update state to invalid location";
         return false;
     } else {
@@ -157,10 +160,11 @@ yarp::sig::Vector moveGroundingModule::computeNextMove(const std::vector<double>
         for (int j = 0; j < tiles.size(); ++j) {
             tile = tiles[j];
             tileLocation.clear();
+            tileLocation.resize(3);
             tileLocation[0] = tile.x;
             tileLocation[1] = tile.y;
             tileLocation[2] = tile.z;
-            dist =  norm(point - tileLocation);
+            dist =  norm2(point - tileLocation);
             if (minDist > dist){
                 minDist = dist;
                 closestTile = tile;
@@ -187,7 +191,14 @@ yarp::sig::Vector moveGroundingModule::computeNextMove(const std::vector<double>
         placeLocation.clear();
     }
 
-
+    yInfo()<< "Game state = \n";
+    for (int k = 0; k < 3; ++k) {
+        std::cout << "[ ";
+        for (int j = 0; j < 3; ++j) {
+            std::cout << gameState(k,j) << ", ";
+        }
+        std::cout << " ]\n";
+    }
     return placeLocation;
 
 };
