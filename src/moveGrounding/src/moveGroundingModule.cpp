@@ -195,7 +195,6 @@ yarp::sig::Vector moveGroundingModule::computeNextMove(const std::vector<double>
                 minDist = dist;
                 closestTile = tile;
             }
-
         }
         stateUpdated |= updateState(closestTile.i, closestTile.j, playerFlag);
         i += 3;
@@ -203,6 +202,7 @@ yarp::sig::Vector moveGroundingModule::computeNextMove(const std::vector<double>
         yInfo() << "Retrieved point " << i/3 << " = [ " << point[0] << ", " << point[1] << ", " << point[2] << "]" ;
 
     }
+
 
     if (stateUpdated){
         yInfo() << "State Updated";
