@@ -27,7 +27,10 @@ dbg.open("/audio/out")
 claps_port = yarp.BufferedPortBottle()
 claps_port.open("/clap/out")
 
-PORT = "/icub/audio"
+ICUB_PORT = "/icub/audio"
+LOCAL_PORT = "/grabber/audio"
+PORT = ICUB_PORT#LOCAL_PORT
+
 if not yarp.NetworkBase_connect(PORT, p.getName()):
     print("cannot connect to audio port")
     sys.exit(0)
@@ -35,12 +38,37 @@ if not yarp.NetworkBase_connect(PORT, p.getName()):
 whole_rec = []
 SAMPLE_RATE = 48000
 RES_WAV_FILE = "/home/egor/test_numpy.wav"
-USE_NN_DETECTOR = True
+USE_NN_DETECTOR = False
 
-model = get_model( num_features= 216 )
-model.load_weights( "./models/rnn_model.h5" )
-train_mean, train_std = joblib.load( "./cache/train_mean_std.dat" )
-print("Loaded data")
+if USE_NN_DETECTOR:
+    model = get_model( num_features= 216 )
+    model.load_weights( "./models/rnn_model.h5" )
+    train_mean, train_std = joblib.load( "./cache/train_mean_std.dat" )
+    print("Loaded data")
+else:
+    model = joblib.load( "./cache/logistic.dat" )
+
+def logistic_detector( signal, sample_rate, frames_to_classify = 10 ):
+    start_time = time.time()
+    features = get_spectrogram(signal, sample_rate, window=10, step=10, max_freq=8000)
+    input = []
+    for i in range(0, features.shape[0], frames_to_classify):
+        subset = features[i:i + frames_to_classify]
+        if len(subset) < frames_to_classify:
+            continue
+        input.append(np.expand_dims(compose_vector_of_functionals(subset), axis=0))
+    input = np.vstack(input)
+    #predictions = model.predict( input )
+    prediction_proba = model.predict_proba( input )
+    predictions = [1 if p[1] > 0.75 else 0 for p in prediction_proba ]
+    total_time = time.time() - start_time
+    #print("Prediction took:{}".format(total_time))
+    #print(predictions)
+    if sum(predictions) > 0:
+        print("*** Detected clap by logreg ***")
+        return True
+    return False
+
 
 def nn_detector( signal, sample_rate, frames_to_classify = 4 ):
     start_time = time.time()
@@ -58,23 +86,22 @@ def nn_detector( signal, sample_rate, frames_to_classify = 4 ):
     #print(pred)
     pred = [1 if p > 0.75 else 0 for p in pred]
     total_time = time.time() - start_time
-    print("Prediction took:{}".format( total_time ))
-    print(pred)
-    if sum(pred) > 5:
-        return False
-    elif sum(pred) > 1:
-        print("*** Detected clap ***")
+    #print("Prediction took:{}".format( total_time ))
+    #print(pred)
+
+    if sum(pred) > 0:
+        #print("*** Detected clap ***")
         return True
     return False
 
-def rms_detector( signal, sample_rate, threshold = 4.0 ):
+def rms_detector( signal, sample_rate, threshold = 6.0 ):
     averaged_signal = np.mean(signal, axis=0)
     S, phase = librosa.magphase(librosa.stft(averaged_signal))
 
     rms = librosa.feature.rmse(S=S)
     rms = rms.ravel()
     max_rms = rms.max()
-    print("Max RMS:{}".format(max_rms))
+    #print("Max RMS:{}".format(max_rms))
 
     # for rm in rms:
     #     rms_value = float(rm)
@@ -83,11 +110,13 @@ def rms_detector( signal, sample_rate, threshold = 4.0 ):
     #     bottle.addDouble(rms_value)
     #     dbg.write()
     if max_rms > threshold:
+        #print("****@@@@ Clap detected @@@****")
         return True
     return False
 
-while True:
-    try:
+try:
+    while True:
+
         snd = p.read()
         if not snd:
             print("cannot read the port")
@@ -106,11 +135,13 @@ while True:
         if USE_NN_DETECTOR:
             clap = nn_detector( res, SAMPLE_RATE )
         else:
-            clap = rms_detector( res, SAMPLE_RATE, threshold = 4.0 )
+            clap_logistic = logistic_detector( res, SAMPLE_RATE, frames_to_classify = 10 )
+            clap_by_rms = rms_detector( res, SAMPLE_RATE, threshold = 10.0 )
+            clap = clap_by_rms & clap_logistic
+            #clap = clap_logistic
 
-
-        if clap > 3.0:
-            print("There was a clap")
+        if clap:
+            print(">>>>&&&& There was a clap")
             clap_bottle = claps_port.prepare()
             clap_bottle.clear()
             clap_bottle.addInt(1)
@@ -126,11 +157,17 @@ while True:
         #if whole_rec.shape[1] > SAMPLE_RATE * 2:
         #    whole_rec =
 
-    except KeyboardInterrupt:
-        librosa.output.write_wav(RES_WAV_FILE, whole_rec, SAMPLE_RATE)
-        print("Written file")
-        p.close()
-        yarp.Network.fini()
-        sys.exit()
+except KeyboardInterrupt:
+    librosa.output.write_wav(RES_WAV_FILE, whole_rec, SAMPLE_RATE)
+    print("Written file")
+except Exception,e:
+    print(e)
+finally:
+    print("grace close")
+    p.close()
+    yarp.Network.fini()
+    dbg.close()
+    claps_port.close()
+    sys.exit()
 
 

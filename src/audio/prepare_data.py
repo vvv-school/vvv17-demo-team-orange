@@ -83,10 +83,11 @@ def get_spectrogram( audio, sample_rate, step = 10, window = 20, max_freq = None
     # return np.transpose( melspectrogram(audio, sr = sample_rate,hop_length=hop_length,
     #                                    n_fft = fft_length, fmax = max_freq) ).astype(np.float32)
     S = melspectrogram(audio, sr=sample_rate, hop_length=hop_length,
-                       n_fft=fft_length, fmax=max_freq, n_mels=40)
+                       n_fft=fft_length,fmin = 1000, fmax=max_freq, n_mels=40)
     rms = librosa.feature.rmse(S=S)
     mfcc = librosa.feature.mfcc(n_mfcc=13, S=librosa.logamplitude(S))
     mfcc_delta = librosa.feature.delta(mfcc)
+    mfcc_delta_delta = librosa.feature.delta(mfcc_delta)
 
     total_mfcc = np.vstack((rms, mfcc, mfcc_delta))
     # total_mfcc = mfcc
@@ -134,6 +135,7 @@ def create_temporal_dataset( directory ):
         wav_file = os.path.abspath( filename[:-4]+".wav" )
         for ann in annotations:
             annotations_by_wav_file[ wav_file ].append( ann )
+        print("Found {} annotations in file {}".format( len( annotations_by_wav_file[ wav_file ]), wav_file  ))
 
     X, Y = [], []
     STEP_SIZE_MS = 10
@@ -157,7 +159,7 @@ def create_temporal_dataset( directory ):
             timing = data_struct["timing"]
 
             sequence_X.append(mfcc)
-            if check_if_timing_in_annotations(timing, lst_annotations, threshold = WINDOW_SIZE):
+            if check_if_timing_in_annotations(timing, lst_annotations, threshold = 0):
                 sequence_Y.append(1)
             else:
                 sequence_Y.append(0)
@@ -166,9 +168,57 @@ def create_temporal_dataset( directory ):
 
     return X,Y
 
+def get_indices_y(seq_q, condition = lambda x: x > 0):
+    res = []
+    current_group = []
+    for v_idx,v in enumerate(seq_q):
+        if condition(v):
+            current_group.append( v_idx )
+        else:
+            if len(current_group) > 0:
+                res.append( current_group )
+                current_group = []
+    if len(current_group) >0:
+        res.append( current_group )
+    return res
+
+def get_consequtive_sequences( seq, length ):
+    for i in range(0, len(seq), length):
+        yield seq[i : i + length]
+
+def get_sequences(lst_all_sequences, lst_all_sequence_labels, max_seq_length):
+
+    res_X = []
+    res_Y = []
+    for seq_X, seq_Y in zip( lst_all_sequences, lst_all_sequence_labels ):
+        clap_group = get_indices_y( seq_Y, condition = lambda x: x > 0 )
+        non_clap_group = get_indices_y( seq_Y, condition = lambda x: x == 0)
+
+        #sample from clap group
+        for group in non_clap_group:
+            group_seq = [seq_X[idx] for idx in group ]
+            for non_clap_group in get_consequtive_sequences( group_seq, max_seq_length ):
+                if len(non_clap_group) < 5 or np.random.random()>0.8:
+                    continue
+                squashed_X = compose_vector_of_functionals(non_clap_group)
+                res_X.append(np.expand_dims(squashed_X, axis=0))
+                res_Y.append(0)
+
+        for group in clap_group:
+            if(len(group)) < 10:
+                continue
+            subset_X = [seq_X[ group_idx ] for group_idx in group ]
 
 
-def get_sequences(lst_all_sequences, lst_all_sequence_labels, sequence_length, sequence_hop):
+            squashed_X = compose_vector_of_functionals( subset_X )
+            res_X.append(  np.expand_dims( squashed_X, axis = 0 )  )
+            res_Y.append( 1 )
+        #sample from non clap group
+
+
+    return np.vstack( res_X ), np.vstack( res_Y )
+
+def __old__get_sequences(lst_all_sequences, lst_all_sequence_labels, sequence_length, sequence_hop):
 
     res_X = []
     res_Y = []
