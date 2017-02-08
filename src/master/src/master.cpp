@@ -215,10 +215,10 @@ void MasterThread::stateMachine() {
         mutexThread.lock();
         if(clapReceived) { 
             yInfo() << "But, I have received a Clap";
-            Bottle& speakBottle = speak->prepare();            
+            Bottle& speakBottle = speak.prepare();            
             speakBottle.clear();
             speakBottle.addString("You played well. It's my turn now!");
-            speak->write();
+            speak.write();
             myturn=true; 
             clapReceived = false;
             mutexThread.unlock();
@@ -298,34 +298,36 @@ void MasterThread::stateMachine() {
                 */
                 Bottle *newBottle = reply.get(0).asList();
                 if(newBottle->size()==1) {
-                    Bottle& speakBottle = speak->prepare();            
+                    Bottle& speakBottle = speak.prepare();            
                     speakBottle.clear();
                     if(newBottle->get(0).asDouble()==0) {
                         yInfo() << "Not our turn!";
                         speakBottle.addString("Sorry! It's not my turn. Make your move");
-                        speak->write();
+                        speak.write();
                         myturn=true; 
                         statemyturn = 0;
                         myturn = false;
   
                     }
-                    if(newBottle->get(0).asDouble()<=-1) {
+                    else if(newBottle->get(0).asDouble()<=-1) {
                         yInfo() << "We lost!";
                         statemyturn = 0;
                         myturn = false;
                         speakBottle.addString("I lost. You are good in this");
-                        speak->write();
+                        speak.write();
                     }
-                    if(newBottle->get(0).asDouble()>=1) {
+                    else if(newBottle->get(0).asDouble()>=1) {
                         yInfo() << "We won!";
                         statemyturn = 0;
                         myturn = false;
                         speakBottle.addString("I Won. I'm the best player ever!");
-                        speak->write();
+                        speak.write();
                     }
-                    speakBottle.addString("something went terrible wrong");
-                    speak->write();   
-                    yError() << "size 1, I dont know what is...";
+                    else {
+                        speakBottle.addString("something went terrible wrong");
+                        speak.write();   
+                        yError() << "size 1, I dont know what is...";
+                    }
                     break;                     
                 }
                 NextMove[0] =newBottle->get(0).asDouble();
@@ -357,10 +359,10 @@ void MasterThread::stateMachine() {
                 cmd.clear();
                 reply.clear();
                 cmd.addString("pickAndPlace");
-                Bottle& speakBottle = speak->prepare();            
+                Bottle& speakBottle = speak.prepare();            
                 speakBottle.clear();
                 speakBottle.addString("Check this out. My next move will be outstanding!");
-                speak->write();
+                speak.write();
                 rpcPickPlace.write(cmd,reply);
                 if(reply.size () <= 0) {
                     yError() << " PickPlace empty Bottle in pickPlace task";
@@ -442,12 +444,15 @@ bool MasterThread::openPorts()
         yError("%s : Unable to open port %s\n", moduleName.c_str(), rpcEmotionsName.c_str());
         return false;
     }
-    speakName = "/speak/";
-    if (!speak->open("/"+moduleName+speakName))
+    speakName = "/speak/"+moduleName+speakName;
+    yInfo() << "Opennin speech";
+    
+    if (!speak.open(speakName.c_str()))
     {
         yError("%s : Unable to open port %s\n", moduleName.c_str(), speakName.c_str());
         return false;
     }
+    yInfo() << "Now";
     return true;
 }
 

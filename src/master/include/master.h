@@ -65,7 +65,7 @@ private:
     yarp::os::RpcClient rpcGameState;
     yarp::os::RpcClient rpcEmotions;
 
-    BufferedPort<Bottle> *speak;
+    BufferedPort<Bottle> speak;
 
     string rpcObjRecoName;
     string rpcClapName;
