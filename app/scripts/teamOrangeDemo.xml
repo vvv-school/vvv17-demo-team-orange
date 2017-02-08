@@ -53,8 +53,8 @@
     <to>/objectRecognition/calibration/rpc:i</to>
 </connection>
 <connection>
-    <from>/memory/rpc</from>
-    <to>/objectRecognition/iol:i</to>
+    <from>/objectRecognition/iol:i</from>
+    <to>/memory/rpc</to>
 </connection>
 
 
