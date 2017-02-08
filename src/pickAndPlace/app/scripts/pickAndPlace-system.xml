@@ -1,6 +1,14 @@
 <application>
 
   <name>pickAndPlace System</name>
+    
+    <module>
+      <name>pickAndPlace</name>
+      <parameters>--robot icubSim</parameters>
+      <environment>YARP_FORWARD_LOG_ENABLE=1</environment>
+      <node>localhost</node>
+  </module>
+
 
   <module>
       <name>yarplogger</name>
@@ -75,5 +83,10 @@
       <environment>YARP_FORWARD_LOG_ENABLE=1</environment>
       <node>localhost</node>
   </module>
+
+  <connection>
+    <from>/wholeBodyDynamics/right_arm/cartesianEndEffectorWrench:o</from>
+    <to>/pickAndPlace/cartesianEndEffectorWrench:i</to>
+</connection>
 
 </application>

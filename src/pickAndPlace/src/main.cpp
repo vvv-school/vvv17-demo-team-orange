@@ -37,10 +37,12 @@ protected:
     Vector pick_location;
     Vector place_location;
 
-    RpcServer inputPort;
+    RpcServer inputPort; // connected to master
 
-    RpcClient biasPort;
-    Port inPort;
+    RpcClient biasPort; // used to reset the wrench value
+    BufferedPort<Bottle> inPort; // used to read the wrench value
+
+
     ObjectRetriever object;
 
 
@@ -111,30 +113,32 @@ protected:
             iarm->checkMotionDone(&motion_done); // or force detected
 
             // read force input port
-            Bottle forceData;
-            if(!inPort.read(forceData)){
+            Bottle* forceData;
+            forceData = inPort.read(true); //TO BE CHANGED TO FALSE!!!
+
+            if(forceData == YARP_NULLPTR){
                 yError()<<"error reading port";
-                force_detected = true; // to stop the motion
-            }
+                force_detected = true; // to stop the motion if no force was read
+            }else{
+//                double zForce = (*forceData).get(2).asDouble(); // get the z (3rd) component of the wrench
+                double xForce = (*forceData).get(0).asDouble(); // get the z (3rd) component of the wrench
+                double yForce = (*forceData).get(1).asDouble(); // get the z (3rd) component of the wrench
+                double zForce = (*forceData).get(2).asDouble(); // get the z (3rd) component of the wrench
 
+                double absForce = sqrt(xForce*xForce + yForce*yForce + zForce*zForce);
+                yInfo()<<"Force data is " << xForce << ", " << yForce<< ", " << zForce <<" N";
 
-
-
-            else{
-                double zForce = forceData.get(2).asDouble();
-                yInfo()<<"Force data is "<< zForce;
-
-                if (fabs(zForce) > force_threshold)
+//                if (fabs(zForce) > force_threshold)
+                if (absForce > force_threshold)
                 {
                     force_detected = true;
                     yInfo()<<"Force threshold exceeded";
                 }
             }
-            Time::delay(0.2);
-
+            Time::delay(1);
 
         }
-        yInfo()<<"reached final hand position";
+        yInfo()<<"stopping motion ...";
 
         bool stoppedControl = iarm->stopControl(); // try really hard to stop that arm...
 
@@ -426,17 +430,14 @@ public:
         drvGaze.view(igaze);
         igaze->storeContext(&startup_ctxt_gaze);
 
-        inputPort.open("/pickAndPlace/rpc:i");
-        //attach(inputPort);
+        inputPort.open("/pickAndPlace/rpc:i"); // port for receiving commands from master
+        attach(inputPort);
 
-        biasPort.open("/wholeBodyDynamics/rpc:i");
+        biasPort.open("/wholeBodyDynamics/rpc:i"); // port for reseting wrench sensor values
 
+        /*inPort.open("/wholeBodyDynamics/right_arm/cartesianEndEffectorWrench:o");*/ //port for reading wrench values
+        inPort.open("/pickAndPlace/cartesianEndEffectorWrench:i");
 
-
-        if (!inPort.open("/relay/in")) {
-            yError() << "cannot open the input port";
-            return -1;
-        }
         return true;
     }
 
@@ -480,7 +481,9 @@ public:
             reply.addVocab(Vocab::encode("many"));
             reply.addString("Available commands:");
             reply.addString("- look_down");
-            reply.addString("- grasp_it");
+            reply.addString("- setStart");
+            reply.addString("- setGoal");
+            reply.addString("- pickAndPlace");
             reply.addString("- quit");
         }
         else if (cmd=="look_down")
