@@ -37,6 +37,11 @@
             <port carrier="rpc">/objectRecognition/calibration/rpc:i</port>
             <description>receives rpc commands</description>
         </input>
+	<input port_type="service">
+            <type>objRecog</type>
+            <port carrier="rpc">/objectRecognition/iol:i</port>
+            <description>sends commands to iol</description>
+        </input>
 
         <!-- output datas if available -->
         <output port_type="service">

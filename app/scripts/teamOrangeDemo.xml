@@ -57,6 +57,10 @@
     <from>/objectRecognition/calibration/rpc:o</from>
     <to>/objectRecognition/calibration/rpc:i</to>
 </connection>
+<connection>
+    <from>/memory/rpc</from>
+    <to>/objectRecognition/iol:i</to>
+</connection>
 
 
 <!-- rpcClient connection to ClapDuo Module-->

@@ -17,6 +17,7 @@ class ObjectRetriever : yarp::os::PortReport
     bool simulation;
     yarp::os::RpcServer portLocation;
     yarp::os::RpcServer portCalibration;
+    yarp::os::RpcClient portClient;
     virtual void report(const yarp::os::PortInfo &info);
     bool calibrate(yarp::sig::Vector &location, const std::string &hand);
 

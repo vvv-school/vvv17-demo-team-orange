@@ -20,6 +20,7 @@ ObjectRetriever::ObjectRetriever() : simulation(false)
 {
     portLocation.open("/objectRecognition/location/rpc:i");
     portCalibration.open("/objectRecognition/calibration/rpc:i");
+    portClient.open("/objectRecognition/iol:i");
 
     portLocation.asPort().setTimeout(1.0);
     portCalibration.asPort().setTimeout(1.0);
@@ -72,10 +73,13 @@ bool ObjectRetriever::calibrate(Vector &location,
     return false;
 }
 
+
+
 /***************************************************/
 bool ObjectRetriever::getLocation(Vector &location, const string &objName, const string &hand)
 {
-    if (portLocation.getOutputCount()>0)
+    //yInfo("if0");
+    if (portClient.getOutputCount()>0)
     {
         Bottle cmd,reply;
         
@@ -84,16 +88,21 @@ bool ObjectRetriever::getLocation(Vector &location, const string &objName, const
             content.addString("name");
             content.addString("==");
             content.addString(objName);
-            portLocation.write(cmd,reply);
-
+            //content.addString(all);
+            portClient.write(cmd,reply);
+           // yInfo("if1"); 
             if (reply.size()>1)
             {
+           //  yInfo("if2");    
                 if (reply.get(0).asVocab()==Vocab::encode("ack"))
                 {
+                   // yInfo("if3"); 
                     if (Bottle *idField=reply.get(1).asList())
                     {
+                      //  yInfo("if4"); 
                         if (Bottle *idValues=idField->get(1).asList())
                         {
+                          //  yInfo("if5"); 
                             int id=idValues->get(0).asInt();
 
                             cmd.clear();
@@ -107,21 +116,25 @@ bool ObjectRetriever::getLocation(Vector &location, const string &objName, const
                             Bottle &list_items=list_propSet.addList();
                             list_items.addString("position_3d");
                             Bottle replyProp;
-                            portLocation.write(cmd,replyProp);
+                            portClient.write(cmd,replyProp);
 
                             if (replyProp.get(0).asVocab()==Vocab::encode("ack"))
                             {
+                           //     yInfo("if6"); 
                                 if (Bottle *propField=replyProp.get(1).asList())
                                 {
+                             //       yInfo("if7"); 
                                     if (Bottle *position_3d=propField->find("position_3d").asList())
                                     {
+                                 //       yInfo("if8"); 
                                         if (position_3d->size()>=3)
                                         {
+                                   //         yInfo("if9"); 
                                             location.resize(3);
                                             location[0]=position_3d->get(0).asDouble();
                                             location[1]=position_3d->get(1).asDouble();
                                             location[2]=position_3d->get(2).asDouble();
-                                            if (calibrate(location,hand))
+                                            //if (calibrate(location,hand))
                                                 return true;
                                         }
                                     }

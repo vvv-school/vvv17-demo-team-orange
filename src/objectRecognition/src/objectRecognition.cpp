@@ -100,13 +100,13 @@ bool ObjectRecognition::respond(const Bottle& command, Bottle& reply) {
     yInfo()<<"Got something, echo is on";
 
     vector<string> objects;
-
-    objects.push_back("one");
-    objects.push_back("two"); 
-    objects.push_back("three");
-    objects.push_back("four");
-    objects.push_back("five"); 
-    objects.push_back("six");
+    locations.resize(3);
+    objects.push_back("One");
+    objects.push_back("Two"); 
+    objects.push_back("Three");
+    objects.push_back("Four");
+    objects.push_back("Five"); 
+    objects.push_back("Six");
   
     int objCounter=0;
         
@@ -130,8 +130,10 @@ bool ObjectRecognition::respond(const Bottle& command, Bottle& reply) {
         for (int i = 0; i < objects.size(); i++)
         {
             yInfo()<<"returning locations";
+            yInfo()<< objRet.getLocation(locations, objects.at(i));
+            yInfo()<< objRet.getLocation(locations, "Six");
 
-            if (objRet.getLocation(locations, objects.at(i)))
+            if (objRet.getLocation(locations, "Six"))
             {
                 
                 reply.addDouble(locations[0]);
@@ -151,7 +153,7 @@ bool ObjectRecognition::respond(const Bottle& command, Bottle& reply) {
 
         }
 
-        if(objCounter==0) reply.addString("object not found!");
+        if(objCounter==0) reply.addString("objectNotFound");
         return true;
        
 
