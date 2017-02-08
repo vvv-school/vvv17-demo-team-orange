@@ -9,5 +9,5 @@ struct Vector {}
 service moveGrounding {
   bool init(1: list<double> boardLocation);
   bool reset();
-  Vector computeNextMove(1: list<double> objLocation);
+  Vector computeNextMove(1: list<double> objLocation, 2: i32 playerFlag);
 }

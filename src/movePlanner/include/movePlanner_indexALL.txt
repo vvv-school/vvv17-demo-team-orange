@@ -1,2 +1,0 @@
-movePlanner_IDL.h
-movePlanner_IDL.cpp
