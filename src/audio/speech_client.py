@@ -21,17 +21,20 @@ yarp.Network.init()
 p = yarp.BufferedPortSound()
 p.open("/audio/in")
 
-DEBUG = True
+DEBUG = sys.argv[1] == "debug"
 ICUB_PORT = "/icub/audio"
-RPC_CLAP_NAME = "/master/rpc:i"
+#RPC_CLAP_NAME = "/master/rpc:i"
+RPC_SERVER_NAME = "/orange/test_rpc"
 RPC_LOCAL_CLIENT_NAME = "/clapDuo/master/rpc:o"
-rpc_port =  yarp.RpcClient()
+#rpc_port =  yarp.RpcClient()
+rpc_port = yarp.Port()
 
-
-if not rpc_port.open(RPC_CLAP_NAME) and not DEBUG:
+if not rpc_port.open(RPC_LOCAL_CLIENT_NAME) and not DEBUG:
     print("Could not connect to RPC client")
     sys.exit(-1)
-yarp.NetworkBase_connect(rpc_port.getName(), RPC_LOCAL_CLIENT_NAME, "tcp")
+else:
+    print("Connected to {}".format( RPC_LOCAL_CLIENT_NAME ))
+yarp.NetworkBase_connect(rpc_port.getName(), RPC_SERVER_NAME, "udp")
 
 
 LOCAL_PORT = "/grabber/audio"
@@ -99,10 +102,10 @@ def nn_detector( signal, sample_rate, frames_to_classify = 15 ):
     pred = model.predict( input )
     pred = pred.ravel()
 
-    pred = [1 if p > 0.5 else 0 for p in pred]
-    print(pred)
+    pred = [1 if p > 0.7 else 0 for p in pred]
+    #print(pred)
     total_time = time.time() - start_time
-    print("Prediction took:{}".format( total_time ))
+    #print("Prediction took:{}".format( total_time ))
     #print(pred)
 
     if sum(pred) > 0:
@@ -146,7 +149,8 @@ try:
                 sample_value = np.short( sample_value )
                 dbl_value = sample_value / 65535.0
                 res[ ch_idx, sample_id] = dbl_value
-
+        #print("0",res[0].sum())
+        #print("1", res[1].sum())
         #simple rmse click
         if USE_NN_DETECTOR:
             clap_nn = nn_detector( res, SAMPLE_RATE, frames_to_classify = 15 )
@@ -166,7 +170,9 @@ try:
                 print("Sending clap message")
                 bottle.clear()
                 bottle.addString("triggerNextMove")
-                rpc_port.write( bottle, result )
+                #this was tcp
+                rpc_port.write( bottle )
+                #rpc_port.write(bottle)
                 print("Got the result from RPC server")
 
 
@@ -174,7 +180,8 @@ try:
             whole_rec = np.hstack( (whole_rec, res) )
         else:
             whole_rec = res
-        print("1 sec is gone:{}".format(whole_rec.shape[1]))
+        if np.random.random() < 0.1:
+            print("1 sec is gone:{}".format(whole_rec.shape[1]))
         #truncate
         #if whole_rec.shape[1] > SAMPLE_RATE * 2:
         #    whole_rec =
