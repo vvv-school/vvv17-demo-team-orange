@@ -51,11 +51,12 @@
 <connection>
     <from>/ObjectRecognition/location/rpc:o</from>
     <to>/ObjectRecognition/location/rpc:i</to>
+</connection>
 
 <connection>
-    <from>"/ObjectRecognition/calibration/rpc:o</from>
+    <from>/ObjectRecognition/calibration/rpc:o</from>
     <to>/ObjectRecognition/calibration/rpc:i</to>
-
+</connection>
 
 
 <!-- rpcClient connection to ClapDuo Module-->
