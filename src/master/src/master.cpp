@@ -134,7 +134,9 @@ bool MasterModule::reset() {
 bool MasterModule::triggerNextMove() {
     yInfo() << "MasterModule: " << "Received triggerNextMove command in RPC";
     comunThread->mutexThread.lock();
-    comunThread->clapReceived = true;
+    if(!comunThread->myturn) { // If it's my turn ignore command
+        comunThread->clapReceived = true;
+    }
     comunThread->mutexThread.unlock();
     
     return true;
@@ -177,19 +179,24 @@ void MasterThread::run(){
                 }
                 cmd.clear();
                 reply.clear();
-                mutexThread.lock();
                 cmd.addString("init");
-                cmd.addDouble(BoardPose[0]);
-                cmd.addDouble(BoardPose[1]);
-                cmd.addDouble(BoardPose[2]);
-                cmd.addDouble(BoardPose[3]);
-                cmd.addDouble(BoardPose[4]);
-                cmd.addDouble(BoardPose[5]);
+                Bottle aux;
+                mutexThread.lock();
+ 
+                aux.addDouble(BoardPose[0]);
+                aux.addDouble(BoardPose[1]);
+                aux.addDouble(BoardPose[2]);
+                aux.addDouble(BoardPose[3]);
+                aux.addDouble(BoardPose[4]);
+                aux.addDouble(BoardPose[5]);
+                cmd.addList() = aux; 
                 mutexThread.unlock();
                 rpcGameState.write(cmd,reply);
                 if(reply.size () <= 0) {
                     yError() << "I have an empty Bottle from Game State BoardPos...=/";
                     return;
+                } else if(!reply.get(0).asBool()) {
+                    yError() << "Init Game State BoardPos FAILED...";
                 }
                 // Send to     
                 sendCommands = false;    
@@ -229,18 +236,10 @@ void MasterThread::stateMachine() {
                 cmd.clear();
 
                 /*********/ 
-                cmd.addString("start");
-                rpcObjReco.write(cmd, reply);
-                if(reply.size () <= 0) {
-                    yError() << "I received a empty Bottle from the Object Recognition";
-                    break;
-                }
-                // READ FROM STREAMING
                 
                 cmd.clear();
-                cmd.addString("stop");
+                cmd.addString("return_locations");
                 rpcObjReco.write(cmd, reply);
-
                 mutexThread.lock();
                 ObjectLoc = reply;
                 mutexThread.unlock();
@@ -259,7 +258,13 @@ void MasterThread::stateMachine() {
                     break;
                 }
                 yInfo() << "Sending Object Location to grounding aka gameState";
-                cmd=reply;
+                cmd.clear();
+                cmd.addString("computeNextMove");
+                mutexThread.lock();
+                cmd.addList() = ObjectLoc;
+                mutexThread.unlock();
+                cmd.addInt(1);
+                yInfo() << " Object Location: " << cmd.toString();
                 reply.clear();
                 rpcGameState.write(cmd, reply);
                 if(reply.size () <= 0) {
@@ -316,6 +321,7 @@ void MasterThread::stateMachine() {
                 }
                 statemyturn = 0;
                 myturn = false;
+                break;
             }
             default:
             {

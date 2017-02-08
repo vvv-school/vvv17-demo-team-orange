@@ -6,14 +6,17 @@
 #include <yarp/os/PortReport.h>
 #include <yarp/os/PortInfo.h>
 #include <yarp/os/RpcClient.h>
+#include <yarp/os/RpcServer.h>
 #include <yarp/sig/Vector.h>
+//#include <yarp/os/Ports.h>
+#include <yarp/os/LogStream.h>
 
 
 class ObjectRetriever : yarp::os::PortReport
 {
     bool simulation;
-    yarp::os::RpcClient portLocation;
-    yarp::os::RpcClient portCalibration;
+    yarp::os::RpcServer portLocation;
+    yarp::os::RpcServer portCalibration;
     virtual void report(const yarp::os::PortInfo &info);
     bool calibrate(yarp::sig::Vector &location, const std::string &hand);
 

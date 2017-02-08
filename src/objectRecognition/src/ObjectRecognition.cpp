@@ -40,8 +40,8 @@ bool ObjectRecognition::configure(yarp::os::ResourceFinder &rf) {
 
     // open all ports
     bool ret = commandPort.open("/ObjectRecognition/command/rpc:i");
-     ret &= locationPort.open("/ObjectRecognition/location/rpc:i");
-     ret &= calibrationPort.open("/ObjectRecognition/calibration/rpc:i");
+     ret &= locationPort.open("/ObjectRecognition/location/rpc:o");
+     ret &= calibrationPort.open("/ObjectRecognition/calibration/rpc:o");
    // ret &= inPort.open("/ObjectRecognition/rpc:o");
    // ret &= outPort.open("/ObjectRecognition/out");
     if(!ret) {
@@ -54,15 +54,7 @@ bool ObjectRecognition::configure(yarp::os::ResourceFinder &rf) {
         return false;
     }
 
-    if(!attach(locationPort)) {
-        yError()<<"Cannot attach to the locationPort";
-        return false;
-    }
-
-    if(!attach(calibrationPort)) {
-        yError()<<"Cannot attach to the calibrationPort";
-        return false;
-    }
+   
 
 
     // set some paramters

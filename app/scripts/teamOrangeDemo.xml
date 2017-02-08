@@ -76,7 +76,10 @@
     <from>/master/pickandplace/rpc:o</from>
     <to>/pickAndPlace/rpc:i</to>
 </connection>
-
+<connection>
+    <from>/master/planner/rpc:o</from>
+    <to>/movePlanner/rpc:i</to>
+</connection>
 <!-- rpcClient connection to Move Grounding Module-->
 <connection>
     <from>/master/moveGroundingModule/rpc:o</from>
