@@ -54,8 +54,8 @@ private:
     std::string modeParam;
 
     yarp::os::RpcServer commandPort;                    // command port
-    yarp::os::RpcServer locationPort;
-    yarp::os::RpcServer calibrationPort;
+    yarp::os::RpcClient locationPort;
+    yarp::os::RpcClient calibrationPort;
  //   yarp::os::BufferedPort<yarp::os::Bottle> inPort;    // input port
  //   yarp::os::BufferedPort<yarp::os::Bottle> outPort;   // output port
 	ObjectRetriever objRet;
