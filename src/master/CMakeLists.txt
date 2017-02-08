@@ -40,3 +40,8 @@ target_link_libraries(${PROJECTNAME} ${YARP_LIBRARIES})
 
 install(TARGETS ${PROJECTNAME} DESTINATION bin)
 
+yarp_install(FILES master.xml DESTINATION ${ICUBCONTRIB_MODULES_INSTALL_DIR})
+
+
+
+

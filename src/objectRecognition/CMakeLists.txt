@@ -36,5 +36,8 @@ install(TARGETS ${PROJECT_NAME} DESTINATION bin)
 # generate ad-hoc project to perform "make uninstall"
 icubcontrib_add_uninstall_target()
 
-file(GLOB scripts ${CMAKE_SOURCE_DIR}/app/scripts/*.xml)
-yarp_install(FILES ${scripts} DESTINATION ${ICUBCONTRIB_APPLICATIONS_INSTALL_DIR})
+#file(GLOB scripts ${CMAKE_SOURCE_DIR}/app/scripts/*.xml)
+#yarp_install(FILES ${scripts} DESTINATION ${ICUBCONTRIB_APPLICATIONS_INSTALL_DIR})
+yarp_install(FILES objectRecognition.xml DESTINATION ${ICUBCONTRIB_MODULES_INSTALL_DIR})
+
+
