@@ -26,8 +26,8 @@ add_definitions(-D_USE_MATH_DEFINES)
 include_directories(${YARP_INCLUDE_DIRS} ${CMAKE_SOURCE_DIR}/src)
 
 add_executable(${PROJECT_NAME} ${CMAKE_SOURCE_DIR}/src/main.cpp 
-			       ${CMAKE_SOURCE_DIR}/src/ObjectRecognition.cpp
-			       ${CMAKE_SOURCE_DIR}/src/ObjectRecognition.h
+			       ${CMAKE_SOURCE_DIR}/src/objectRecognition.cpp
+			       ${CMAKE_SOURCE_DIR}/src/objectRecognition.h
                                ${CMAKE_SOURCE_DIR}/src/helpers.h
                                ${CMAKE_SOURCE_DIR}/src/helpers.cpp)
 target_link_libraries(${PROJECT_NAME} ${YARP_LIBRARIES})
