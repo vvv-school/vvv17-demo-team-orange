@@ -40,7 +40,7 @@ bool moveGroundingModule::configure(yarp::os::ResourceFinder &rf) {
         return false;
     }
 
-    if(!yarp().attachAsClient(requestPort)) {
+    if(!iMovePlanner.yarp().attachAsClient(requestPort)) {
         yError()<<"Cannot attach to the requestPort";
         return false;
     }
@@ -139,10 +139,8 @@ bool moveGroundingModule::updateState(int i, int j, int val) {
     }
 }
 
-yarp::sig::Vector askNextMove(){
-    yarp::os::Bottle cmd,reply;
-    cmd.addString("computeNextMove");
-    //TODO
+yarp::sig::Vector moveGroundingModule::askNextMove(){
+
 }
 
 yarp::sig::Vector moveGroundingModule::computeNextMove(const std::vector<double> & objLocation, const int32_t playerFlag){

@@ -27,14 +27,17 @@ icubcontrib_set_default_prefix()
 # building module
 include_directories(${YARP_INCLUDE_DIRS}
         ${PROJECT_SOURCE_DIR}/include
-        )
+        ${movePlanner_BINARY_DIR}/include)
 
 include(YarpIDL)
 yarp_add_idl(IDL_GEN_FILES moveGrounding.thrift)
+#yarp_add_idl(IDL_GEN_FILES ${movePlanner_SOURCE_DIR}/movePlanner.thrift)
 
 
-file(GLOB source src/*.cpp)
-file(GLOB headers include/*.h)
+file(GLOB source src/*.cpp
+        ${movePlanner_BINARY_DIR}/src/*.cpp)
+file(GLOB headers include/*.h
+                  ${movePlanner_BINARY_DIR}/include/*.h)
 set(idl ${PROJECT_NAME}.thrift)
 
 source_group("Source Files" FILES ${source})
