@@ -260,9 +260,15 @@ protected:
     }
 
     /***************************************************/
-    bool pick_or_place(const double grasp_configuration, const double hand_orientation, const Vector target_position, bool pick)
+    bool pick_or_place(const double grasp_configuration, const double hand_orientation, bool pick)
     {
+        Vector target_position;
 
+        if(pick){
+            target_position = pick_location;
+        }else{
+            target_position = place_location;
+        }
 
         yInfo()<<"Starting the grasping";
 
@@ -313,6 +319,23 @@ protected:
 
         liftObject();
         yInfo()<<"lifted";
+
+        if (!pick){
+            drvArmR.view(iarm);
+
+
+            // enable all dofs but the roll of the torso
+
+            Vector dof(10, 1.0);
+            dof[1] = 0.0; // roll is dof[1]
+            Vector curDof;
+            iarm->setDOF(dof, curDof);
+
+            Vector home = pick_location;
+            home[2] = initial_approach_height;
+            iarm->goToPoseSync(home, o);
+            iarm->waitMotionDone();
+        }
 
         return true;
 
@@ -369,7 +392,7 @@ public:
         string robot=rf.check("robot",Value("icubSim")).asString();
 
         initial_approach_height = 0.25;
-        force_threshold = 10;
+        force_threshold = 7;
 
         pick_location.resize(3);
         pick_location[0] = -0.3;
@@ -548,8 +571,8 @@ public:
 
             bool ok;
 
-            ok = pick_or_place(fingers_closure, hand_orientation, pick_location, true);
-            ok = pick_or_place(fingers_closure, hand_orientation, place_location, false);
+            ok = pick_or_place(fingers_closure, hand_orientation, true);
+            ok = pick_or_place(fingers_closure, hand_orientation, false);
             // we assume the robot is not moving now
             if (ok)
             {
