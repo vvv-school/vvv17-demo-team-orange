@@ -96,22 +96,28 @@ protected:
         Vector approach = x;
         approach[2] = initial_approach_height; // in m
         iarm->goToPoseSync(approach, o);
-        iarm->waitMotionDone();
+        iarm->waitMotionDone(0.1,5.0);
         yInfo()<<"Reached approach position. Going down now.";
 
-        // reset the force sensors here!
-        Bottle cmd;
-        cmd.addInt(0);
-        biasPort.write(cmd);
+
+        // reset the force sensors
+        Bottle cmd,reply;
+        cmd.addString("calib");
+        cmd.addString("all");
+        biasPort.write(cmd,reply);
+        Time::delay(1.0);
 
         iarm->goToPoseSync(x, o); // should use force feedback at some point
         bool motion_done = false;
         bool force_detected = false;
 
+        int initTime = Time::now();
+        int motionDuration = 5; // in seconds
+        bool timeOut = false;
 
-        while(!motion_done && !force_detected){
+        while(!motion_done && !force_detected && !timeOut){
             iarm->checkMotionDone(&motion_done); // or force detected
-
+            timeOut = (Time::now() - initTime > motionDuration);
             // read force input port
             Bottle* forceData;
             forceData = inPort.read(true); //TO BE CHANGED TO FALSE!!!
@@ -136,7 +142,6 @@ protected:
                 }
             }
             Time::delay(0.1);
-
         }
         yInfo()<<"stopping motion ...";
 
@@ -149,23 +154,38 @@ protected:
     void liftObject()
     {
         // select the correct interface
-
             drvArmR.view(iarm);
-
         // just lift the hand a few centimeters
         // wrt the current position
-
         Vector x, o;
         if (iarm->getPose(x, o))
         {
 
-            x[2] = initial_approach_height; // lift 15cm, orientation stays the same
+            x[2] = initial_approach_height; // lift; orientation stays the same
             yInfo() << "Lifting the object to " << x.toString();
             iarm->goToPoseSync(x, o);
-            iarm->waitMotionDone();
+            iarm->waitMotionDone(0.1,5.0);
         }
     }
 
+    void liftLeftArm()
+    {
+        // select the correct interface
+        drvArmL.view(iarm);
+        // just lift the hand a few centimeters
+        // wrt the current position
+        Vector x(3);
+
+        x[0]=-0.2;
+        x[1]=-0.3;
+        x[2]=0.4;
+
+
+        yInfo() << "Lifting the object to " << x.toString();
+        iarm->goToPositionSync(x);
+        iarm->waitMotionDone(0.1,5.0);
+
+    }
     /***************************************************/
     void moveFingers(
                      const VectorOf<int> &joints,
@@ -188,7 +208,21 @@ protected:
         // if min_j and max_j are the minimum and maximum bounds of joint j,
         // then we should move to min_j+fingers_closure_sat*(max_j-min_j)
 
-        for (size_t i=0; i<joints.size(); i++)
+        int j=joints[0];
+
+        double min_j, max_j;
+        if (ilim->getLimits(j, &min_j, &max_j))
+        {
+            double jointValue = min_j + fingers_closure_sat * (max_j - min_j); // formula that was given...
+            //ipos->setRefAcceleration(j, 200);
+            //ipos->setRefSpeed(j, 30);
+            ipos->setRefAcceleration(j, 70);
+            ipos->setRefSpeed(j, 15);
+            imod->setControlMode(j, VOCAB_CM_POSITION);
+            ipos->positionMove(j, jointValue);
+        }
+
+        for (size_t i=joints.size(); i>0; i--)
         {
             int j=joints[i];
 
@@ -202,6 +236,7 @@ protected:
                 ipos->setRefSpeed(j, 15);
                 imod->setControlMode(j, VOCAB_CM_POSITION);
                 ipos->positionMove(j, jointValue);
+                Time::delay(0.5);
             }
         }
 
@@ -289,31 +324,31 @@ protected:
 
         if(pick)
         {
-            // let's put the hand in the pre-grasp configuration
-            moveFingers(abduction,0.7);
-            moveFingers(thumb,1.0);
+            // put the hand in the pre-grasp configuration
+            moveFingers(abduction,0.0);
+            moveFingers(thumb,0.7);
             moveFingers(fingers,0.0);
             yInfo()<<"prepared hand";
         }
         else{
             // just keep the hand closed
         }
-
+        yDebug() << "I managed to open my fingers!";
         approachTargetWithHand(target_position,o);
         yInfo()<<"approached object";
 
+        double open_offset = 0.2; // might need tuning
+
         if (pick){
             // grasp
-
-            moveFingers(fingers,grasp_configuration);
+            moveFingers(fingers,grasp_configuration - open_offset); // pre grasp
+            moveFingers(fingers,grasp_configuration); // grasp
             yInfo()<<"grasped";
-
-
             // picking ends here
         }
         else{
             // drop
-            double open_offset = 0.2; // might need tuning
+
             moveFingers(fingers,grasp_configuration - open_offset); // open the hand
         }
 
@@ -334,7 +369,7 @@ protected:
             Vector home = pick_location;
             home[2] = initial_approach_height;
             iarm->goToPoseSync(home, o);
-            iarm->waitMotionDone();
+            iarm->waitMotionDone(0.1, 5);
         }
 
         return true;
@@ -391,18 +426,17 @@ public:
     {
         string robot=rf.check("robot",Value("icubSim")).asString();
 
-        initial_approach_height = 0.25;
-        force_threshold = 7;
-
+        initial_approach_height = 0.15;
+        force_threshold = 8;
         pick_location.resize(3);
-        pick_location[0] = -0.3;
-        pick_location[1] = 0.0;
-        pick_location[2] = 0.1;
+        pick_location[0] = -0.10;
+        pick_location[1] = 0.30;
+        pick_location[2] = -0.05;
 
         yInfo()<<pick_location.size();
 
         place_location.resize(3);
-        place_location[0] = -0.3;
+        place_location[0] = -0.25;
         place_location[1] = 0.0;
         place_location[2] = 0.1;
 
@@ -462,6 +496,8 @@ public:
 
         /*inPort.open("/wholeBodyDynamics/right_arm/cartesianEndEffectorWrench:o");*/ //port for reading wrench values
         inPort.open("/pickAndPlace/cartesianEndEffectorWrench:i");
+
+        liftLeftArm();
 
         return true;
     }
@@ -556,7 +592,7 @@ public:
             // close the fingers around the object:
             // if closure == 0.0, the finger joints have to reach their minimum
             // if closure == 1.0, the finger joints have to reach their maximum
-            double fingers_closure = 0.5; // default value
+            double fingers_closure = 0.4; // default value
             double hand_orientation = 30.0;
 
             // we can pass a new value via rpc
