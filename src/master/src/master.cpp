@@ -200,7 +200,11 @@ void MasterThread::run(){
                     yError() << "Init Game State BoardPos FAILED...";
                 }
                 // Send to     
-                sendCommands = false;    
+                sendCommands = false;
+                Bottle& speakBottle = speak.prepare();            
+                speakBottle.clear();
+                speakBottle.addString("Something went terrible wrong... Just Kidding, I am fine! Let's Play!");
+                speak.write();    
             }
         stateMachine();
     }
