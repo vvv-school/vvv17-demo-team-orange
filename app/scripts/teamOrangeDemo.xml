@@ -23,6 +23,7 @@
 <module>
     <name>pickAndPlace</name>
     <node>localhost</node>
+    <parameters>--robot icub</parameters>
 </module>
 
 <module>

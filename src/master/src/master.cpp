@@ -155,7 +155,7 @@ MasterThread::MasterThread(string Name, bool whostarts, int r) : RateThread(r) {
 void MasterThread::run(){
     // Game State machine...
     if(running) {
-        if(rpcObjReco.getOutputCount()<=0 || rpcClap.getOutputCount()<=0 || rpcPlanner.getOutputCount()<=0 || rpcPickPlace.getOutputCount()<=0 || rpcGameState.getOutputCount()<=0) {
+        if(rpcObjReco.getOutputCount()<=0 || rpcPlanner.getOutputCount()<=0 || rpcPickPlace.getOutputCount()<=0 || rpcGameState.getOutputCount()<=0) {
             yInfo() << "MasterThread: Waiting for connections...";        
             Time::delay(0.4);  
             return;      
@@ -259,11 +259,11 @@ void MasterThread::stateMachine() {
                 mutexThread.lock();
                 if(reply.get(0).asString()=="objectNotFound") {
                     ObjectLoc.clear();
-                    GameStateInt = -1;
+                    GameStateInt = 1;
                 }
                 else {
                     ObjectLoc = reply;
-                    GameStateInt = 1;
+                    GameStateInt = -1;
                 }
                 mutexThread.unlock();
                 yInfo() << "Receive Object Recognition Bottle: ";
@@ -450,13 +450,13 @@ bool MasterThread::openPorts()
         yError("%s : Unable to open port %s\n", moduleName.c_str(), rpcGameStateName.c_str());
         return false;
     }
-    rpcEmotionsName = "/emotions/";
+    rpcEmotionsName = "/emotions";
     if (!rpcEmotions.open("/"+moduleName+rpcEmotionsName+"rpc:o"))
     {
         yError("%s : Unable to open port %s\n", moduleName.c_str(), rpcEmotionsName.c_str());
         return false;
     }
-    speakName = "/speak/"+moduleName+speakName;
+    speakName = "/"+moduleName+"/speak";
     yInfo() << "Opennin speech";
     
     if (!speak.open(speakName.c_str()))
