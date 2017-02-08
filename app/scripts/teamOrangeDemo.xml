@@ -91,4 +91,8 @@
     <to>/moveGroundingModule/rpc:i</to>
 </connection>
 
+<connection>
+    <from>/master/speak</from>
+    <to>/iSpeak</to>
+</connection>
 </application>
