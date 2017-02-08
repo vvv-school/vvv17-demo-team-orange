@@ -1,0 +1,45 @@
+<module>
+    <name>clapDuo</name>
+
+    <doxygen-group>orange Team VVV17</doxygen-group>
+    <description>Module for recognizing the clap</description>
+    <copypolicy>Released under the terms of the GNU GPL v2.0</copypolicy>
+    <version>1.0</version>
+
+    <description-long>
+    This module plans listens to claps and sends a boolean if it has received one
+    </description-long>
+
+    <authors>
+        <author> Egor Lakomkin </author>
+        <author> Chandrakant Bothe </author>
+    </authors>
+
+    <data>
+
+        <input port_type="service">
+            <type>clapDuo</type>
+            <port carrier="tcp">/clapDuo/rpc:i</port>
+            <description>sends a boolean if it has read a clap</description>
+        </input>
+
+        <!-- output datas if available -->
+        <!--
+        <output port_type="stream">
+            <type>yarp::os::Bottle</type>
+            <port carrier="udp">/Codec/out</port>
+            <description>streams coded or encoded text messages</description>
+        </output>
+      -->
+    </data>
+<!--
+    <services>
+      <server>
+        <type>movePlanner_IDL</type>
+        <idl>movePlanner.thrift</idl>
+        <port>/movePlanner/rpc:i</port>
+        <description>service port</description>
+      </server>
+    </services>
+-->
+</module>

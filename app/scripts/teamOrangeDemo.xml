@@ -45,17 +45,17 @@
 <!-- rpcClient connection to Object Recognition Module-->
 <connection>
     <from>/master/objReco/rpc:o</from>
-    <to>/ObjectRecognition/command/rpc:i</to>
+    <to>/objectRecognition/command/rpc:i</to>
 </connection>
 
 <connection>
-    <from>/ObjectRecognition/location/rpc:o</from>
-    <to>/ObjectRecognition/location/rpc:i</to>
+    <from>/objectRecognition/location/rpc:o</from>
+    <to>/objectRecognition/location/rpc:i</to>
 </connection>
 
 <connection>
-    <from>/ObjectRecognition/calibration/rpc:o</from>
-    <to>/ObjectRecognition/calibration/rpc:i</to>
+    <from>/objectRecognition/calibration/rpc:o</from>
+    <to>/objectRecognition/calibration/rpc:i</to>
 </connection>
 
 
@@ -68,7 +68,7 @@
 <!-- rpcClient connection to Move Planner Module-->
 <connection>
     <from>/movePlanner/rpc:o</from>
-    <to>/moveGroundingModule/rpc</to>
+    <to>/moveGroundingModule/rpc:i</to>
 </connection>
 
 <!-- rpcClient connection to Pick And Place Module-->
@@ -79,8 +79,8 @@
 
 <!-- rpcClient connection to Move Grounding Module-->
 <connection>
-    <from>/master/moveGrounding/rpc:o</from>
-    <to>/moveGroundingModule/rpc</to>
+    <from>/master/moveGroundingModule/rpc:o</from>
+    <to>/moveGroundingModule/rpc:i</to>
 </connection>
 
 </application>

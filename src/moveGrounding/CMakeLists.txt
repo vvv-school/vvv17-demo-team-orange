@@ -49,3 +49,6 @@ add_executable(${PROJECT_NAME}
 
 target_link_libraries(moveGrounding ${YARP_LIBRARIES})
 install(TARGETS moveGrounding DESTINATION bin)
+yarp_install(FILES moveGrounding.xml DESTINATION ${ICUBCONTRIB_MODULES_INSTALL_DIR})
+
+
