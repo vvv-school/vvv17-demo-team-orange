@@ -23,18 +23,18 @@ icubcontrib_set_default_prefix()
 # import math symbols from standard cmath
 add_definitions(-D_USE_MATH_DEFINES)
 
-include_directories(${YARP_INCLUDE_DIRS} ${CMAKE_SOURCE_DIR}/src)
+include_directories(${YARP_INCLUDE_DIRS} ${PROJECT_SOURCE_DIR}/src)
 
-add_executable(${PROJECT_NAME} ${CMAKE_SOURCE_DIR}/src/main.cpp 
-			       ${CMAKE_SOURCE_DIR}/src/objectRecognition.cpp
-			       ${CMAKE_SOURCE_DIR}/src/objectRecognition.h
-                               ${CMAKE_SOURCE_DIR}/src/helpers.h
-                               ${CMAKE_SOURCE_DIR}/src/helpers.cpp)
+add_executable(${PROJECT_NAME} ${PROJECT_SOURCE_DIR}/src/main.cpp 
+			       ${PROJECT_SOURCE_DIR}/src/objectRecognition.cpp
+			       ${PROJECT_SOURCE_DIR}/src/objectRecognition.h
+                               ${PROJECT_SOURCE_DIR}/src/helpers.h
+                               ${PROJECT_SOURCE_DIR}/src/helpers.cpp)
 target_link_libraries(${PROJECT_NAME} ${YARP_LIBRARIES})
 install(TARGETS ${PROJECT_NAME} DESTINATION bin)
 
 # generate ad-hoc project to perform "make uninstall"
-icubcontrib_add_uninstall_target()
+#icubcontrib_add_uninstall_target()
 
 #file(GLOB scripts ${CMAKE_SOURCE_DIR}/app/scripts/*.xml)
 #yarp_install(FILES ${scripts} DESTINATION ${ICUBCONTRIB_APPLICATIONS_INSTALL_DIR})
