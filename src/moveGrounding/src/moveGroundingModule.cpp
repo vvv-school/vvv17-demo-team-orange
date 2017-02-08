@@ -29,7 +29,9 @@ bool moveGroundingModule::configure(yarp::os::ResourceFinder &rf) {
     gameState.zero();
 
     // open all ports
-    bool ret = commandPort.open("/moveGroundingModule/rpc");
+    bool ret = commandPort.open("/moveGroundingModule/rpc:i");
+    ret &= requestPort.open("/moveGroundingModule/rpc:o");
+
     if(!ret) {
         yError()<<"Cannot open some of the ports";
         return false;
@@ -140,13 +142,36 @@ bool moveGroundingModule::updateState(int i, int j, int val) {
 }
 
 yarp::sig::Vector moveGroundingModule::askNextMove(){
+    yarp::sig::Vector tileCoordinates = iMovePlanner.computeNextMove(gameState);
+    std::cout << "tileCoordinates.size() = " << tileCoordinates.size() << std::endl;
+    if (tileCoordinates.size() == 0){
+        yInfo() << "Could not retrieve next move. Check connection with movePlanner";
+        return tileCoordinates;
+    }
+    if (tileCoordinates.size() == 1){
+        yInfo() << "GAME OVER";
+        return tileCoordinates;
+    }
+
+    for (int i = 0; i < tiles.size(); ++i) {
+        if (tiles[i].i == tileCoordinates[0] && tiles[i].j == tileCoordinates[1]){
+            yarp::sig::Vector tileLocation(3);
+            tileLocation[0] = tiles[i].x;
+            tileLocation[1] = tiles[i].y;
+            tileLocation[2] = tiles[i].z;
+            yInfo() << "Retrieved next move location = [ " << tileLocation[0] << ", " << tileLocation[1] << ", " << tileLocation[2] << "]" ;
+            updateState(tiles[i].i, tiles[i].j, 1);
+            return tileLocation;
+        }
+    }
+
 
 }
 
 yarp::sig::Vector moveGroundingModule::computeNextMove(const std::vector<double> & objLocation, const int32_t playerFlag){
 
    yInfo() << "Grounding!";
-    yarp::sig::Vector placeLocation(objLocation.size());
+    yarp::sig::Vector placeLocation(3);
     yarp::sig::Vector point (3);
     yarp::sig::Vector tileLocation (3);
     Tile tile;
