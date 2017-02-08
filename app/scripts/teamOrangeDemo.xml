@@ -26,11 +26,6 @@
 </module>
 
 <module>
-    <name>clapDuo</name>
-    <node>localhost</node>
-</module>
-
-<module>
     <name>moveGrounding</name>
     <node>localhost</node>
 </module>
@@ -60,11 +55,15 @@
 
 
 <!-- rpcClient connection to ClapDuo Module-->
-<connection>
+<!--<connection>
     <from>/master/clap/rpc:o</from>
     <to>/clapDuo/rpc:i</to>
 </connection>
-
+-->
+<connection>
+    <from>/clapDuo/master/rpc:o</from>
+    <to>/master/rpc:i</to>
+</connection>
 <!-- rpcClient connection to Move Planner Module
 <connection>
     <from>/movePlanner/rpc:o</from>
