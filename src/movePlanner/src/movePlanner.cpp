@@ -91,13 +91,13 @@ bool movePlanner::checkEnd()
         winner = sign;
         return true;
     }
-    bool tie = false;
+    bool tie = true;
     for ( int idx=0; idx < 3; idx++)
     {
         for (int jdx=0; jdx <3; jdx++)
         {
             if (board(idx,jdx) == 0)
-                tie = true;
+                tie = false;
         }
     }
     if (tie)
@@ -134,7 +134,7 @@ yarp::sig::Vector movePlanner::computeNextMove(const yarp::sig::Matrix & boardup
                 debugPlotState();
             resetBoard();
             return returnMove;
-        } else {
+        } else { // tie
             returnMove.push_back(23);
             if (dbg_flag)
                 debugPlotState();

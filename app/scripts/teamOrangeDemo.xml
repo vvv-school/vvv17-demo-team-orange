@@ -23,6 +23,7 @@
 <module>
     <name>pickAndPlace</name>
     <node>localhost</node>
+    <parameters>--robot icub</parameters>
 </module>
 
 <module>
@@ -53,8 +54,8 @@
     <to>/objectRecognition/calibration/rpc:i</to>
 </connection>
 <connection>
-    <from>/memory/rpc</from>
-    <to>/objectRecognition/iol:i</to>
+    <from>/objectRecognition/iol:i</from>
+    <to>/memory/rpc</to>
 </connection>
 
 

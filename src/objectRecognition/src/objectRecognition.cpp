@@ -24,16 +24,6 @@ ObjectRecognition::ObjectRecognition() { }
 ObjectRecognition::~ObjectRecognition() { }
 
 
-//bool objectLocations(yarp::os::Bottle& input){
-
-
-
-	//oRetriever.getLocation(locations,"right");
-
-//	return false;
-//}
-
-
 bool ObjectRecognition::configure(yarp::os::ResourceFinder &rf) {
 
     yInfo()<<"Configuring the object recog module...";
@@ -42,8 +32,6 @@ bool ObjectRecognition::configure(yarp::os::ResourceFinder &rf) {
     bool ret = commandPort.open("/objectRecognition/command/rpc:i");
      ret &= locationPort.open("/objectRecognition/location/rpc:o");
      ret &= calibrationPort.open("/objectRecognition/calibration/rpc:o");
-   // ret &= inPort.open("/ObjectRecognition/rpc:o");
-   // ret &= outPort.open("/ObjectRecognition/out");
     if(!ret) {
         yError()<<"Cannot open some of the ports";
         return false;
@@ -92,7 +80,8 @@ bool ObjectRecognition::updateModule() {
     output.addString(data.c_str());
     outPort.write();
     
-    */return true;
+    */
+    return true;
 }
 
 
@@ -135,22 +124,15 @@ bool ObjectRecognition::respond(const Bottle& command, Bottle& reply) {
 
             if (objRet.getLocation(locations, "Six"))
             {
-                
                 reply.addDouble(locations[0]);
                 reply.addDouble(locations[1]);
                 reply.addDouble(locations[2]);
                 objCounter++;
                 yInfo() << "Current number of objects = " << objCounter << " current object = " << objects.at(i) ;
-                
             }
             else{
                 yInfo() << objects.at(i) << "does not exist on the board";
-               // reply.addDouble(0.0);
-               // reply.addDouble(0.0);
-               // reply.addDouble(0.0);
             }
-
-
         }
 
         if(objCounter==0) reply.addString("objectNotFound");
@@ -178,10 +160,8 @@ bool ObjectRecognition::close() {
     commandPort.close();
     locationPort.close();
     calibrationPort.close();
-  //  inPort.close();
     // you can force writing remaining data
     // using outPort.writeStrict();
- //   outPort.close();
     return true;
 }
 

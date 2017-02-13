@@ -78,31 +78,25 @@ bool ObjectRetriever::calibrate(Vector &location,
 /***************************************************/
 bool ObjectRetriever::getLocation(Vector &location, const string &objName, const string &hand)
 {
-    //yInfo("if0");
     if (portClient.getOutputCount()>0)
     {
         Bottle cmd,reply;
         
-            cmd.addVocab(Vocab::encode("ask"));
-            Bottle &content=cmd.addList().addList();
-            content.addString("name");
-            content.addString("==");
-            content.addString(objName);
-            //content.addString(all);
-            portClient.write(cmd,reply);
-           // yInfo("if1"); 
+        cmd.addVocab(Vocab::encode("ask"));
+        Bottle &content=cmd.addList().addList();
+        content.addString("name");
+        content.addString("==");
+        content.addString(objName);
+        portClient.write(cmd,reply);
+
             if (reply.size()>1)
             {
-           //  yInfo("if2");    
                 if (reply.get(0).asVocab()==Vocab::encode("ack"))
                 {
-                   // yInfo("if3"); 
                     if (Bottle *idField=reply.get(1).asList())
                     {
-                      //  yInfo("if4"); 
                         if (Bottle *idValues=idField->get(1).asList())
                         {
-                          //  yInfo("if5"); 
                             int id=idValues->get(0).asInt();
 
                             cmd.clear();
@@ -120,22 +114,17 @@ bool ObjectRetriever::getLocation(Vector &location, const string &objName, const
 
                             if (replyProp.get(0).asVocab()==Vocab::encode("ack"))
                             {
-                           //     yInfo("if6"); 
                                 if (Bottle *propField=replyProp.get(1).asList())
                                 {
-                             //       yInfo("if7"); 
                                     if (Bottle *position_3d=propField->find("position_3d").asList())
                                     {
-                                 //       yInfo("if8"); 
                                         if (position_3d->size()>=3)
                                         {
-                                   //         yInfo("if9"); 
                                             location.resize(3);
                                             location[0]=position_3d->get(0).asDouble();
                                             location[1]=position_3d->get(1).asDouble();
                                             location[2]=position_3d->get(2).asDouble();
-                                            //if (calibrate(location,hand))
-                                                return true;
+                                            return true;
                                         }
                                     }
                                 }

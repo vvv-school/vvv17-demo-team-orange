@@ -19,8 +19,6 @@ public:
     ObjectRecognition();
     virtual ~ObjectRecognition();
 
-	//bool ObjectRecognition(yarp::os::Bottle& input);
-
 /*
     * Configure function. Receive a previously initialized
     * resource finder object. Use it to configure your module.
@@ -56,13 +54,8 @@ private:
     yarp::os::RpcServer commandPort;                    // command port
     yarp::os::RpcClient locationPort;
     yarp::os::RpcClient calibrationPort;
- //   yarp::os::BufferedPort<yarp::os::Bottle> inPort;    // input port
- //   yarp::os::BufferedPort<yarp::os::Bottle> outPort;   // output port
 	ObjectRetriever objRet;
     yarp::os::Bottle outputBottle; 
-//	yarp::os::RpcClient outPort;
-//    yarp::os::RpcClient inPort;
- //   ObjectRetriever oRetriever; 
     yarp::sig::Vector locations;
 
 };
